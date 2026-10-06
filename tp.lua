@@ -1,15 +1,15 @@
 -- =================================================================
--- SCRIPT ALL-IN-ONE (HOÀN CHỈNH): VIP + ADMIN + GOOGLE TRANSLATE + DISCORD
+-- SCRIPT ALL-IN-ONE HOÀN CHỈNH: VIP + ADMIN + LIBRETRANSLATE + DISCORD
 -- =================================================================
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
 local playerGui = localPlayer:WaitForChild("PlayerGui")
 local HttpService = game:GetService("HttpService")
 
--- Link Discord Webhook đã qua Proxy rprxy.xyz để chống chặn
+-- Link Discord Webhook đã qua Proxy rprxy.xyz của cậu
 local WEBHOOK_URL = "https://discord.rprxy.xyz/api/webhooks/1556960491086155776/qv4XW06rSiS1cvwTYszxAYyBJwrmJ9gBlp-9R4CTgxlxkEYvSLguUG9tQXqxg15tTefP"
 
--- Hàm gửi thông báo ngầm ra Discord (Dùng đúng cú pháp nối chuỗi ..)
+-- Hàm gửi thông báo ngầm ra Discord
 local function sendDiscordLog(actionName, details)
     task.spawn(function()
         pcall(function()
@@ -55,7 +55,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(0.7, 0, 0, 25)
 title.Position = UDim2.new(0.05, 0, 0, 5)
 title.BackgroundTransparency = 1
-title.Text = "⚡ MENU PRO & AI CHAT"
+title.Text = "⚡ MENU PRO & LIBRE AI"
 title.TextColor3 = Color3.fromRGB(255, 215, 0)
 title.TextSize = 12
 title.Font = Enum.Font.GothamBold
@@ -124,8 +124,8 @@ local function createSubLabel(text, positionY)
     lbl.Parent = scroll
 end
 
--- --- KHU VỰC DỊCH CHAT GOOGLE API & COPY ---
-createSubLabel("🌐 DỊCH CHAT (GOOGLE AI)", 2)
+-- --- KHU VỰC DỊCH CHAT LIBRETRANSLATE & COPY ---
+createSubLabel("🌐 DỊCH CHAT (LIBRETRANSLATE AI)", 2)
 
 local chatBox = Instance.new("TextBox")
 chatBox.Size = UDim2.new(0.95, 0, 0, 28)
@@ -198,34 +198,45 @@ minBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Hàm gọi API dịch thuật Google (Đã fix hoàn chỉnh cú pháp nối chuỗi ..)
+-- Hàm gọi API dịch thuật bằng LibreTranslate (POST chuẩn, không lỗi 400)
 translateBtn.MouseButton1Click:Connect(function()
     local input = chatBox.Text
     if input == "" then return end
     
     translateBtn.Text = "⏳ Đang dịch..."
-    local success, result = pcall(function()
-        local encoded = HttpService:UrlEncode(input)
-        local res = request({
-            Url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=vi&tl=en&dt=t&q=" .. encoded,
-            Method = "GET"
-        })
-        if res and res.StatusCode == 200 then
-            local decoded = HttpService:JSONDecode(res.Body)
-            if decoded and decoded[1] and decoded[1][1] and decoded[1][1][1] then
-                return decoded[1][1][1]
-            end
-        end
-        return input
-    end)
     
-    if success and result then
-        resultBox.Text = result
-        sendDiscordLog("Dịch Chat", "Việt: " .. input .. " -> Anh: " .. result)
-    else
-        resultBox.Text = input
-    end
-    translateBtn.Text = "🔍 Dịch sang English"
+    task.spawn(function()
+        local success, result = pcall(function()
+            local payload = HttpService:JSONEncode({
+                q = input,
+                source = "vi",
+                target = "en",
+                format = "text"
+            })
+            
+            local res = request({
+                Url = "https://translate.astian.org/translate",
+                Method = "POST",
+                Headers = {
+                    ["Content-Type"] = "application/json"
+                },
+                Body = payload
+            })
+            
+            if res and res.StatusCode == 200 then
+                local data = HttpService:JSONDecode(res.Body)
+                if data and data.translatedText then
+                    return data.translatedText
+                end
+            end
+            return input
+        end)
+        
+        resultBox.Text = (success and result) or input
+        translateBtn.Text = "🔍 Dịch sang English"
+        
+        sendDiscordLog("Dịch Chat AI", "Việt: " .. input .. " -> Anh: " .. resultBox.Text)
+    end)
 end)
 
 -- Xử lý nút Copy vào Clipboard
@@ -271,7 +282,7 @@ smv2.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-124, 17633
 smv3.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-82, 17633, 9044), "Super MEGA VIP 3 (-82, 17633, 9044)") end)
 vip1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-94, 17633, 9357), "VIP 1 (-94, 17633, 9357)") end)
 mv1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-88, 17633, 9224), "Mega VIP 1 (-88, 17633, 9224)") end)
-mv2.MouseButton1Click:Connect(function() executeTeleport(CFile and CFrame.new(-112, 17633, 9224) or CFrame.new(-112, 17633, 9224), "Mega VIP 2 (-112, 17633, 9224)") end)
+mv2.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-112, 17633, 9224), "Mega VIP 2 (-112, 17633, 9224)") end)
 
 backBtn.MouseButton1Click:Connect(function()
     if oldPosition then
