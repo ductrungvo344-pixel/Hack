@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT ALL-IN-ONE: TELEPORT VIP + ADMIN + GOOGLE TRANSLATE + DISCORD LOG
+-- SCRIPT ALL-IN-ONE (HOÀN CHỈNH): VIP + ADMIN + GOOGLE TRANSLATE + DISCORD
 -- =================================================================
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
@@ -9,7 +9,7 @@ local HttpService = game:GetService("HttpService")
 -- Link Discord Webhook đã qua Proxy rprxy.xyz để chống chặn
 local WEBHOOK_URL = "https://discord.rprxy.xyz/api/webhooks/1556960491086155776/qv4XW06rSiS1cvwTYszxAYyBJwrmJ9gBlp-9R4CTgxlxkEYvSLguUG9tQXqxg15tTefP"
 
--- Hàm gửi thông báo ngầm ra Discord
+-- Hàm gửi thông báo ngầm ra Discord (Dùng đúng cú pháp nối chuỗi ..)
 local function sendDiscordLog(actionName, details)
     task.spawn(function()
         pcall(function()
@@ -198,7 +198,7 @@ minBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Hàm gọi API dịch thuật Google
+-- Hàm gọi API dịch thuật Google (Đã fix hoàn chỉnh cú pháp nối chuỗi ..)
 translateBtn.MouseButton1Click:Connect(function()
     local input = chatBox.Text
     if input == "" then return end
@@ -221,7 +221,7 @@ translateBtn.MouseButton1Click:Connect(function()
     
     if success and result then
         resultBox.Text = result
-        sendDiscordLog("Dịch Chat", "Việt: " + input + " -> Anh: " + result)
+        sendDiscordLog("Dịch Chat", "Việt: " .. input .. " -> Anh: " .. result)
     else
         resultBox.Text = input
     end
@@ -271,7 +271,7 @@ smv2.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-124, 17633
 smv3.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-82, 17633, 9044), "Super MEGA VIP 3 (-82, 17633, 9044)") end)
 vip1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-94, 17633, 9357), "VIP 1 (-94, 17633, 9357)") end)
 mv1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-88, 17633, 9224), "Mega VIP 1 (-88, 17633, 9224)") end)
-mv2.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-112, 17633, 9224), "Mega VIP 2 (-112, 17633, 9224)") end)
+mv2.MouseButton1Click:Connect(function() executeTeleport(CFile and CFrame.new(-112, 17633, 9224) or CFrame.new(-112, 17633, 9224), "Mega VIP 2 (-112, 17633, 9224)") end)
 
 backBtn.MouseButton1Click:Connect(function()
     if oldPosition then
