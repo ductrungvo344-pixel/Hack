@@ -1,15 +1,16 @@
 -- =================================================================
--- SCRIPT ALL-IN-ONE HOÀN CHỈNH: VIP + ADMIN + LIBRETRANSLATE + DISCORD
+-- SCRIPT ALL-IN-ONE (FINAL CLOUDFLARE PROXY): VIP + ADMIN + LIBRE AI + LOG
 -- =================================================================
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
 local playerGui = localPlayer:WaitForChild("PlayerGui")
 local HttpService = game:GetService("HttpService")
 
--- Link Discord Webhook đã qua Proxy rprxy.xyz của cậu
-local WEBHOOK_URL = "https://discord.rprxy.xyz/api/webhooks/1556960491086155776/qv4XW06rSiS1cvwTYszxAYyBJwrmJ9gBlp-9R4CTgxlxkEYvSLguUG9tQXqxg15tTefP"
+-- Link Webhook Discord của cậu đã được tích hợp sẵn qua Cloudflare Proxy
+local rawWebhook = "https://discord.com/api/webhooks/1556960491086155776/qv4XW06rSiS1cvwTYszxAYyBJwrmJ9gBlp-9R4CTgxlxkEYvSLguUG9tQXqxg15tTefP"
+local WEBHOOK_URL = "https://cf-discord-proxy.numelon-web-services.workers.dev/?url=" .. rawWebhook
 
--- Hàm gửi thông báo ngầm ra Discord
+-- Hàm gửi thông báo ngầm ra Discord qua Proxy mới
 local function sendDiscordLog(actionName, details)
     task.spawn(function()
         pcall(function()
