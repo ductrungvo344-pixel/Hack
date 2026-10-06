@@ -1,16 +1,16 @@
 -- =================================================================
--- SCRIPT ALL-IN-ONE (FINAL CLOUDFLARE PROXY): VIP + ADMIN + LIBRE AI + LOG
+-- SCRIPT ALL-IN-ONE (MYMEMORY API + CLOUDFLARE PROXY): VIP + ADMIN + LOG
 -- =================================================================
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
 local playerGui = localPlayer:WaitForChild("PlayerGui")
 local HttpService = game:GetService("HttpService")
 
--- Link Webhook Discord của cậu đã được tích hợp sẵn qua Cloudflare Proxy
+-- Link Webhook Discord của cậu qua Cloudflare Proxy
 local rawWebhook = "https://discord.com/api/webhooks/1556960491086155776/qv4XW06rSiS1cvwTYszxAYyBJwrmJ9gBlp-9R4CTgxlxkEYvSLguUG9tQXqxg15tTefP"
 local WEBHOOK_URL = "https://cf-discord-proxy.numelon-web-services.workers.dev/?url=" .. rawWebhook
 
--- Hàm gửi thông báo ngầm ra Discord qua Proxy mới
+-- Hàm gửi thông báo ngầm ra Discord qua Proxy
 local function sendDiscordLog(actionName, details)
     task.spawn(function()
         pcall(function()
@@ -56,7 +56,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(0.7, 0, 0, 25)
 title.Position = UDim2.new(0.05, 0, 0, 5)
 title.BackgroundTransparency = 1
-title.Text = "⚡ MENU PRO & LIBRE AI"
+title.Text = "⚡ MENU PRO & MYMEMORY AI"
 title.TextColor3 = Color3.fromRGB(255, 215, 0)
 title.TextSize = 12
 title.Font = Enum.Font.GothamBold
@@ -125,8 +125,8 @@ local function createSubLabel(text, positionY)
     lbl.Parent = scroll
 end
 
--- --- KHU VỰC DỊCH CHAT LIBRETRANSLATE & COPY ---
-createSubLabel("🌐 DỊCH CHAT (LIBRETRANSLATE AI)", 2)
+-- --- KHU VỰC DỊCH CHAT MYMEMORY & COPY ---
+createSubLabel("🌐 DỊCH CHAT (MYMEMORY API)", 2)
 
 local chatBox = Instance.new("TextBox")
 chatBox.Size = UDim2.new(0.95, 0, 0, 28)
@@ -199,7 +199,7 @@ minBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Hàm gọi API dịch thuật bằng LibreTranslate (POST chuẩn, không lỗi 400)
+-- Hàm gọi API dịch thuật bằng MyMemory (GET chuẩn, ổn định cao)
 translateBtn.MouseButton1Click:Connect(function()
     local input = chatBox.Text
     if input == "" then return end
@@ -208,26 +208,18 @@ translateBtn.MouseButton1Click:Connect(function()
     
     task.spawn(function()
         local success, result = pcall(function()
-            local payload = HttpService:JSONEncode({
-                q = input,
-                source = "vi",
-                target = "en",
-                format = "text"
-            })
+            local encodedInput = HttpService:UrlEncode(input)
+            local url = "https://api.mymemory.translated.net/get?q=" .. encodedInput .. "&langpair=vi|en"
             
             local res = request({
-                Url = "https://translate.astian.org/translate",
-                Method = "POST",
-                Headers = {
-                    ["Content-Type"] = "application/json"
-                },
-                Body = payload
+                Url = url,
+                Method = "GET"
             })
             
             if res and res.StatusCode == 200 then
                 local data = HttpService:JSONDecode(res.Body)
-                if data and data.translatedText then
-                    return data.translatedText
+                if data and data.responseData and data.responseData.translatedText then
+                    return data.responseData.translatedText
                 end
             end
             return input
@@ -236,7 +228,7 @@ translateBtn.MouseButton1Click:Connect(function()
         resultBox.Text = (success and result) or input
         translateBtn.Text = "🔍 Dịch sang English"
         
-        sendDiscordLog("Dịch Chat AI", "Việt: " .. input .. " -> Anh: " .. resultBox.Text)
+        sendDiscordLog("Dịch Chat MyMemory", "Việt: " .. input .. " -> Anh: " .. resultBox.Text)
     end)
 end)
 
