@@ -12,15 +12,20 @@ const client = new Client({
 const app = express();
 app.use(express.json());
 
-// Lấy trực tiếp từ Biến môi trường trên Render.com
 const TOKEN = process.env.DISCORD_TOKEN;
 const CHANNEL_ID = process.env.CHANNEL_ID;
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
 client.once('ready', () => {
     console.log(`🤖 Bot đã sẵn sàng với tên: ${client.user.tag}`);
 });
 
+// Thêm trang chủ để UptimeRobot truy cập không bị lỗi 404 Not Found
+app.get('/', (req, res) => {
+    res.status(200).send('Roblox Discord Bot is alive and running!');
+});
+
+// Endpoint nhận dữ liệu từ script Roblox
 app.post('/send-game-log', async (req, res) => {
     try {
         const { gameName, placeId, universeId, scriptBloxUrl } = req.body;
