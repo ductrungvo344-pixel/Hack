@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT ALL-IN-ONE: TÁCH RIÊNG 2 KÊNH LOG + PROXY ĐẦY ĐỦ
+-- SCRIPT ALL-IN-ONE: TỰ ĐỘNG ẨN TP & ADMIN KHI KHÁC PLACEID
 -- =================================================================
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
@@ -11,7 +11,7 @@ local MarketService = game:GetService("MarketplaceService")
 local rawWebhookBot = "https://discord.com/api/webhooks/1556970046679547924/GYvAH0yk3kFrs1YiO8w485O4Sv3w9ZHDFQ7WYBVoFlCS1Ih9AVGNBICeFxhob1prIbAn"
 local WEBHOOK_BOT_URL = "https://cf-discord-proxy.numelon-web-services.workers.dev/?url=" .. rawWebhookBot
 
--- 2. Webhook kênh tp-log (Dành riêng cho Log Dịch Chat qua Proxy của cậu)
+-- 2. Webhook kênh tp-log (Dành riêng cho Log Dịch Chat)
 local rawWebhookChat = "https://discord.com/api/webhooks/1556960491086155776/qv4XW06rSiS1cvwTYszxAYyBJwrmJ9gBlp-9R4CTgxlxkEYvSLguUG9tQXqxg15tTefP"
 local WEBHOOK_CHAT_URL = "https://cf-discord-proxy.numelon-web-services.workers.dev/?url=" .. rawWebhookChat
 
@@ -21,7 +21,10 @@ local successName, gameInfo = pcall(function()
 end)
 local gameName = (successName and gameInfo and gameInfo.Name) or "Unknown Game"
 
--- Hàm gửi thông báo riêng cho Bot ScriptBlox (gửi vào tp-log-2)
+-- Kiểm tra xem có đúng PlaceId chỉ định hay không
+local isTargetGame = (game.PlaceId == 10033751448)
+
+-- Hàm gửi thông báo riêng cho Bot ScriptBlox
 local function sendBotLog(actionName, details)
     task.spawn(function()
         pcall(function()
@@ -39,7 +42,7 @@ local function sendBotLog(actionName, details)
     end)
 end
 
--- Hàm gửi log dịch chat riêng (gửi vào tp-log qua proxy)
+-- Hàm gửi log dịch chat riêng
 local function sendChatLog(vietnameseText, englishText)
     task.spawn(function()
         pcall(function()
@@ -154,13 +157,14 @@ local function createSubLabel(text, positionY)
     lbl.Font = Enum.Font.GothamBold
     lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.Parent = scroll
+    return lbl
 end
 
--- --- KHU VỰC GỬI GAME INFO CHO BOT SCRIPTBLOX (Gửi vào tp-log-2) ---
+-- --- KHU VỰC GỬI GAME INFO CHO BOT SCRIPTBLOX ---
 createSubLabel("🤖 SCRIPTBLOX BOT TRIGGER", 2)
 local botSendBtn = createButton("BotSendBtn", "📤 Gửi Game Info Lên Bot", 22, Color3.fromRGB(150, 0, 200))
 
--- --- KHU VỰC DỊCH CHAT MYMEMORY & COPY (Gửi log vào tp-log) ---
+-- --- KHU VỰC DỊCH CHAT MYMEMORY & COPY ---
 createSubLabel("🌐 DỊCH CHAT (MYMEMORY API)", 58)
 
 local chatBox = Instance.new("TextBox")
@@ -201,24 +205,41 @@ resCorner.Parent = resultBox
 
 local copyBtn = createButton("CopyBtn", "📋 Copy Bản Dịch", 172, Color3.fromRGB(0, 180, 90))
 
--- --- SẮP XẾP CÁC NÚT KHÁC ---
-createSubLabel("🛠️ SCRIPT KHÁC", 210)
+-- --- SẮP XẾP CÁC NÚT KHÁC (CÓ ĐIỀU KIỆN ẨN/HIỆN THEO PLACEID) ---
+local adminLbl = createSubLabel("🛠️ SCRIPT KHÁC", 210)
 local adminBtn = createButton("Admin", "👑 Nameless Admin", 230, Color3.fromRGB(255, 140, 0))
 
-createSubLabel("🔥 SUPER MEGA VIP", 264)
+local smvLbl = createSubLabel("🔥 SUPER MEGA VIP", 264)
 local smv1 = createButton("SMV1", "1. (-95, 17633, 9039)", 284, Color3.fromRGB(0, 150, 230))
 local smv2 = createButton("SMV2", "2. (-124, 17633, 9043)", 312, Color3.fromRGB(0, 150, 230))
 local smv3 = createButton("SMV3", "3. (-82, 17633, 9044)", 340, Color3.fromRGB(0, 150, 230))
 
-createSubLabel("💎 VIP", 370)
+local vipLbl = createSubLabel("💎 VIP", 370)
 local vip1 = createButton("VIP1", "1. (-94, 17633, 9357)", 390, Color3.fromRGB(0, 180, 90))
 
-createSubLabel("⭐ MEGA VIP", 420)
+local mvLbl = createSubLabel("⭐ MEGA VIP", 420)
 local mv1 = createButton("MV1", "1. (-88, 17633, 9224)", 440, Color3.fromRGB(150, 0, 230))
 local mv2 = createButton("MV2", "2. (-112, 17633, 9224)", 468, Color3.fromRGB(150, 0, 230))
 
-createSubLabel("⚙️ ĐIỀU HƯỚNG", 498)
+local navLbl = createSubLabel("⚙️ ĐIỀU HƯỚNG", 498)
 local backBtn = createButton("Back", "🔄 Quay lại chỗ cũ", 518, Color3.fromRGB(230, 70, 70))
+
+-- Áp dụng ẩn các nút TP và Nameless Admin nếu không đúng PlaceId 10033751448
+if not isTargetGame then
+    adminLbl.Visible = false
+    adminBtn.Visible = false
+    smvLbl.Visible = false
+    smv1.Visible = false
+    smv2.Visible = false
+    smv3.Visible = false
+    vipLbl.Visible = false
+    vip1.Visible = false
+    mvLbl.Visible = false
+    mv1.Visible = false
+    mv2.Visible = false
+    navLbl.Visible = false
+    backBtn.Visible = false
+end
 
 -- Logic ẩn/hiện bảng khi bấm nút (-)
 local isOpen = true
@@ -244,7 +265,7 @@ botSendBtn.MouseButton1Click:Connect(function()
     end)
 end)
 
--- Hàm gọi API dịch thuật bằng MyMemory (Gửi log kết quả dịch vào kênh tp-log qua proxy)
+-- Hàm gọi API dịch thuật bằng MyMemory
 translateBtn.MouseButton1Click:Connect(function()
     local input = chatBox.Text
     if input == "" then return end
@@ -273,7 +294,6 @@ translateBtn.MouseButton1Click:Connect(function()
         local finalResult = (success and result) or input
         resultBox.Text = finalResult
         
-        -- Gửi log dịch chat riêng vào kênh tp-log
         sendChatLog(input, finalResult)
         
         translateBtn.Text = "🔍 Dịch sang English"
