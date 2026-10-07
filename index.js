@@ -1,5 +1,6 @@
 const { Client, GatewayIntentBits, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const express = require('express');
+const axios = require('axios');
+const http = require('http'); // Thêm thư viện http để tạo cổng ảo
 
 const client = new Client({
     intents: [
@@ -9,54 +10,68 @@ const client = new Client({
     ]
 });
 
-const app = express();
-app.use(express.json());
-
-const TOKEN = process.env.DISCORD_TOKEN;
-const CHANNEL_ID = process.env.CHANNEL_ID;
-const PORT = process.env.PORT || 10000;
+const LOG_CHANNEL_ID = process.env.CHANNEL_ID;
 
 client.once('ready', () => {
-    console.log(`🤖 Bot đã sẵn sàng với tên: ${client.user.tag}`);
-});
-
-// Thêm trang chủ để UptimeRobot truy cập không bị lỗi 404 Not Found
-app.get('/', (req, res) => {
-    res.status(200).send('Roblox Discord Bot is alive and running!');
-});
-
-// Endpoint nhận dữ liệu từ script Roblox
-app.post('/send-game-log', async (req, res) => {
-    try {
-        const { gameName, placeId, universeId, scriptBloxUrl } = req.body;
-        const channel = await client.channels.fetch(CHANNEL_ID);
-        
-        if (!channel) {
-            return res.status(404).send({ error: "Không tìm thấy kênh Discord!" });
-        }
-
-        const row = new ActionRowBuilder()
-            .addComponents(
-                new ButtonBuilder()
-                    .setLabel('🔍 Tìm Script trên ScriptBlox')
-                    .setStyle(ButtonStyle.Link)
-                    .setURL(scriptBloxUrl)
-            );
-
-        await channel.send({
-            content: `🕹️ **[ROBLOX BOT - TP-LOG-2]**\n📌 **Tên Game:** \`${gameName}\`\n🆔 **Game ID:** \`${placeId}\`\n🌐 **Universe ID:** \`${universeId}\``,
-            components: [row]
-        });
-
-        res.status(200).send({ success: true, message: "Đã gửi log thành công!" });
-    } catch (error) {
-        console.error(error);
-        res.status(500).send({ error: error.message });
+    console.log(`🤖 Bot đã khởi động thành công với tên: ${client.user.tag}`);
+    if (!LOG_CHANNEL_ID) {
+        console.warn("⚠️ Cảnh báo: Chưa cấu hình biến môi trường CHANNEL_ID trên Render!");
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`🌐 Server đang chạy trên cổng ${PORT}`);
+client.on('messageCreate', async (message) => {
+    if (LOG_CHANNEL_ID && message.channel.id === LOG_CHANNEL_ID && message.content.includes('🆔 **PlaceId:**')) {
+        try {
+            const match = message.content.match(/🆔 \*\*PlaceId:\*\* `(\d+)`|🆔 \*\*PlaceId:\*\* (\d+)/);
+            if (!match) return;
+            
+            const placeId = match[1] || match[2];
+            console.log(`[ScriptBlox Bot] Đã nhận PlaceId từ log: ${placeId}`);
+
+            const response = await axios.get(`https://scriptblox.com/api/script/search?q=${placeId}`);
+            const data = response.data;
+            
+            if (data && data.result && data.result.scripts && data.result.scripts.length > 0) {
+                const scripts = data.result.scripts.slice(0, 5);
+                const row = new ActionRowBuilder();
+                
+                scripts.forEach((script, index) => {
+                    let title = script.title || `Script ${index + 1}`;
+                    if (title.length > 80) title = title.substring(0, 77) + '...';
+                    
+                    const scriptUrl = `https://scriptblox.com/script/${script._id}`;
+                    
+                    row.addComponents(
+                        new ButtonBuilder()
+                            .setLabel(title)
+                            .setStyle(ButtonStyle.Link)
+                            .setURL(scriptUrl)
+                    );
+                });
+
+                await message.channel.send({
+                    content: `🔍 Tìm thấy **${data.result.scripts.length}** script cho PlaceId \`${placeId}\` trên ScriptBlox:`,
+                    components: [row]
+                });
+            } else {
+                await message.channel.send(`❌ Không tìm thấy script nào cho PlaceId \`${placeId}\` trên ScriptBlox.`);
+            }
+
+        } catch (error) {
+            console.error('Lỗi khi gọi API ScriptBlox:', error);
+            await message.channel.send(`⚠️ Đã xảy ra lỗi khi kết nối tới API ScriptBlox.`);
+        }
+    }
 });
 
-client.login(TOKEN);
+// --- TẠO MỘT WEB SERVER NHỎ ĐỂ MỞ CỔNG ẢO CHO RENDER ---
+const PORT = process.env.PORT || 10000;
+http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('Bot ScriptBlox is running!');
+}).listen(PORT, '0.0.0.0', () => {
+    console.log(`🌐 Cổng ảo đang chạy thành công trên cổng: ${PORT}`);
+});
+
+// Đăng nhập bot
+client.login(process.env.DISCORD_TOKEN);
