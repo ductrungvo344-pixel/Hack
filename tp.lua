@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT ALL-IN-ONE: TỰ ĐỘNG ẨN TP & ADMIN KHI KHÁC PLACEID
+-- SCRIPT ALL-IN-ONE: MENU + DỊCH CHAT (TP-LOG) + BOT TRIGGER (TP-LOG-2)
 -- =================================================================
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
@@ -7,11 +7,11 @@ local playerGui = localPlayer:WaitForChild("PlayerGui")
 local HttpService = game:GetService("HttpService")
 local MarketService = game:GetService("MarketplaceService")
 
--- 1. Webhook kênh tp-log-2 (Dành cho Bot ScriptBlox)
+-- 1. Webhook kênh tp-log-2 (Dành cho Bot ScriptBlox & Rscripts)
 local rawWebhookBot = "https://discord.com/api/webhooks/1556970046679547924/GYvAH0yk3kFrs1YiO8w485O4Sv3w9ZHDFQ7WYBVoFlCS1Ih9AVGNBICeFxhob1prIbAn"
 local WEBHOOK_BOT_URL = "https://cf-discord-proxy.numelon-web-services.workers.dev/?url=" .. rawWebhookBot
 
--- 2. Webhook kênh tp-log (Dành riêng cho Log Dịch Chat)
+-- 2. Webhook kênh tp-log (Dành riêng cho Log Dịch Chat qua Proxy)
 local rawWebhookChat = "https://discord.com/api/webhooks/1556960491086155776/qv4XW06rSiS1cvwTYszxAYyBJwrmJ9gBlp-9R4CTgxlxkEYvSLguUG9tQXqxg15tTefP"
 local WEBHOOK_CHAT_URL = "https://cf-discord-proxy.numelon-web-services.workers.dev/?url=" .. rawWebhookChat
 
@@ -21,16 +21,16 @@ local successName, gameInfo = pcall(function()
 end)
 local gameName = (successName and gameInfo and gameInfo.Name) or "Unknown Game"
 
--- Kiểm tra xem có đúng PlaceId chỉ định hay không
+-- Kiểm tra xem có đúng PlaceId chỉ định hay không (10033751448)
 local isTargetGame = (game.PlaceId == 10033751448)
 
--- Hàm gửi thông báo riêng cho Bot ScriptBlox
+-- Hàm gửi thông báo riêng cho Bot ScriptBlox (gửi vào tp-log-2)
 local function sendBotLog(actionName, details)
     task.spawn(function()
         pcall(function()
             local payload = {
-                ["content"] = string.format("🎮 **[ScriptBlox Bot Trigger]**\n👤 **Player:** `%s`\n🗺️ **Game Name:** `%s`\n🆔 **PlaceId:** `%d`\n📌 **Hành động:** `%s`\n💬 **Data:** `%s`", 
-                    localPlayer.Name, gameName, game.PlaceId, actionName, details)
+                ["content"] = string.format("[ScriptBlox Bot Trigger]\n🗺️ **Game Name:** `%s`\n🆔 **PlaceId:** `%d`\n📌 **Hành động:** `%s`\n💬 **Data:** `%s`", 
+                    gameName, game.PlaceId, actionName, details)
             }
             request({
                 Url = WEBHOOK_BOT_URL,
@@ -42,7 +42,7 @@ local function sendBotLog(actionName, details)
     end)
 end
 
--- Hàm gửi log dịch chat riêng
+-- Hàm gửi log dịch chat riêng (gửi vào tp-log)
 local function sendChatLog(vietnameseText, englishText)
     task.spawn(function()
         pcall(function()
@@ -205,7 +205,7 @@ resCorner.Parent = resultBox
 
 local copyBtn = createButton("CopyBtn", "📋 Copy Bản Dịch", 172, Color3.fromRGB(0, 180, 90))
 
--- --- SẮP XẾP CÁC NÚT KHÁC (CÓ ĐIỀU KIỆN ẨN/HIỆN THEO PLACEID) ---
+-- --- SẮP XẾP CÁC NÚT KHÁC (ẨN HIỆN THEO PLACEID) ---
 local adminLbl = createSubLabel("🛠️ SCRIPT KHÁC", 210)
 local adminBtn = createButton("Admin", "👑 Nameless Admin", 230, Color3.fromRGB(255, 140, 0))
 
@@ -224,7 +224,7 @@ local mv2 = createButton("MV2", "2. (-112, 17633, 9224)", 468, Color3.fromRGB(15
 local navLbl = createSubLabel("⚙️ ĐIỀU HƯỚNG", 498)
 local backBtn = createButton("Back", "🔄 Quay lại chỗ cũ", 518, Color3.fromRGB(230, 70, 70))
 
--- Áp dụng ẩn các nút TP và Nameless Admin nếu không đúng PlaceId 10033751448
+-- Tự động ẩn các nút TP và Admin nếu không phải game chỉ định
 if not isTargetGame then
     adminLbl.Visible = false
     adminBtn.Visible = false
@@ -255,17 +255,17 @@ minBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Gửi thông tin Game vào tp-log-2
+-- Gửi thông tin Game vào tp-log-2 để bot quét script
 botSendBtn.MouseButton1Click:Connect(function()
     botSendBtn.Text = "⏳ Đang gửi cho Bot..."
     task.spawn(function()
-        sendBotLog("Request ScriptBlox", "Yêu cầu bot quét script cho game: " .. gameName)
+        sendBotLog("Request ScriptBlox & Rscripts", "Yêu cầu bot quét script cho game: " .. gameName)
         task.wait(1.5)
         botSendBtn.Text = "📤 Gửi Game Info Lên Bot"
     end)
 end)
 
--- Hàm gọi API dịch thuật bằng MyMemory
+-- Hàm dịch chat
 translateBtn.MouseButton1Click:Connect(function()
     local input = chatBox.Text
     if input == "" then return end
@@ -300,7 +300,7 @@ translateBtn.MouseButton1Click:Connect(function()
     end)
 end)
 
--- Xử lý nút Copy vào Clipboard
+-- Copy bản dịch
 copyBtn.MouseButton1Click:Connect(function()
     local textToCopy = resultBox.Text
     if textToCopy ~= "" then
@@ -313,15 +313,15 @@ copyBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Chạy script Nameless Admin
+-- Nameless Admin
 adminBtn.MouseButton1Click:Connect(function()
     pcall(function()
         loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Nameless-Admin-23304"))()
     end)
 end)
 
--- Hàm teleport chính
-local function executeTeleport(targetCFrame, locationName)
+-- Hàm teleport
+local function executeTeleport(targetCFrame)
     local character = localPlayer.Character
     local rootPart = character and character:FindFirstChild("HumanoidRootPart")
     
@@ -334,13 +334,12 @@ local function executeTeleport(targetCFrame, locationName)
     end
 end
 
--- Gắn sự kiện click tọa độ
-smv1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-95, 17633, 9039), "SMV1") end)
-smv2.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-124, 17633, 9043), "SMV2") end)
-smv3.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-82, 17633, 9044), "SMV3") end)
-vip1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-94, 17633, 9357), "VIP1") end)
-mv1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-88, 17633, 9224), "MV1") end)
-mv2.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-112, 17633, 9224), "MV2") end)
+smv1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-95, 17633, 9039)) end)
+smv2.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-124, 17633, 9043)) end)
+smv3.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-82, 17633, 9044)) end)
+vip1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-94, 17633, 9357)) end)
+mv1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-88, 17633, 9224)) end)
+mv2.MouseButton1Click:Connect(function() executeTeleport(CFile or CFrame.new(-112, 17633, 9224)) end)
 
 backBtn.MouseButton1Click:Connect(function()
     if oldPosition then
