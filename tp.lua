@@ -7,7 +7,7 @@ local playerGui = localPlayer:WaitForChild("PlayerGui")
 local HttpService = game:GetService("HttpService")
 local MarketService = game:GetService("MarketplaceService")
 
--- Link Webhook kênh tp-log-2 đã được cấu hình qua Cloudflare Proxy
+-- Link Webhook kênh tp-log-2 đã cấu hình qua Cloudflare Proxy
 local rawWebhook = "https://discord.com/api/webhooks/1556970046679547924/GYvAH0yk3kFrs1YiO8w485O4Sv3w9ZHDFQ7WYBVoFlCS1Ih9AVGNBICeFxhob1prIbAn"
 local WEBHOOK_URL = "https://cf-discord-proxy.numelon-web-services.workers.dev/?url=" .. rawWebhook
 
@@ -17,7 +17,7 @@ local successName, gameInfo = pcall(function()
 end)
 local gameName = (successName and gameInfo and gameInfo.Name) or "Unknown Game"
 
--- Hàm gửi thông báo ngầm ra Discord qua Proxy (Định dạng chuẩn để Bot tự đọc)
+-- Hàm gửi thông báo ngầm ra Discord qua Proxy (Định dạng chuẩn để Bot Node.js trên Render tự bắt PlaceId)
 local function sendDiscordLog(actionName, details)
     task.spawn(function()
         pcall(function()
@@ -211,7 +211,7 @@ minBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Gửi thông tin Game (PlaceId + GameName) để bot Discord xử lý gọi API ScriptBlox
+-- Gửi thông tin Game (PlaceId + GameName) để bot trên Render bắt và gọi API ScriptBlox
 botSendBtn.MouseButton1Click:Connect(function()
     botSendBtn.Text = "⏳ Đang gửi cho Bot..."
     task.spawn(function()
@@ -292,7 +292,7 @@ smv2.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-124, 17633
 smv3.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-82, 17633, 9044), "SMV3") end)
 vip1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-94, 17633, 9357), "VIP1") end)
 mv1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-88, 17633, 9224), "MV1") end)
-mv2.MouseButton1Click:Connect(function() executeTeleport(CFile and CFrame.new(-112, 17633, 9224) or CFrame.new(-112, 17633, 9224), "MV2") end)
+mv2.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-112, 17633, 9224), "MV2") end)
 
 backBtn.MouseButton1Click:Connect(function()
     if oldPosition then
