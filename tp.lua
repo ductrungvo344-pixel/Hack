@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT ALL-IN-ONE: MENU + DỊCH + ADMIN + GỬI GAME INFO CHO BOT SCRIPTBLOX
+-- SCRIPT ALL-IN-ONE: TÁCH RIÊNG 2 KÊNH LOG + PROXY ĐẦY ĐỦ
 -- =================================================================
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
@@ -7,9 +7,13 @@ local playerGui = localPlayer:WaitForChild("PlayerGui")
 local HttpService = game:GetService("HttpService")
 local MarketService = game:GetService("MarketplaceService")
 
--- Link Webhook kênh tp-log-2 đã cấu hình qua Cloudflare Proxy
-local rawWebhook = "https://discord.com/api/webhooks/1556970046679547924/GYvAH0yk3kFrs1YiO8w485O4Sv3w9ZHDFQ7WYBVoFlCS1Ih9AVGNBICeFxhob1prIbAn"
-local WEBHOOK_URL = "https://cf-discord-proxy.numelon-web-services.workers.dev/?url=" .. rawWebhook
+-- 1. Webhook kênh tp-log-2 (Dành cho Bot ScriptBlox)
+local rawWebhookBot = "https://discord.com/api/webhooks/1556970046679547924/GYvAH0yk3kFrs1YiO8w485O4Sv3w9ZHDFQ7WYBVoFlCS1Ih9AVGNBICeFxhob1prIbAn"
+local WEBHOOK_BOT_URL = "https://cf-discord-proxy.numelon-web-services.workers.dev/?url=" .. rawWebhookBot
+
+-- 2. Webhook kênh tp-log (Dành riêng cho Log Dịch Chat qua Proxy của cậu)
+local rawWebhookChat = "https://discord.com/api/webhooks/1556960491086155776/qv4XW06rSiS1cvwTYszxAYyBJwrmJ9gBlp-9R4CTgxlxkEYvSLguUG9tQXqxg15tTefP"
+local WEBHOOK_CHAT_URL = "https://cf-discord-proxy.numelon-web-services.workers.dev/?url=" .. rawWebhookChat
 
 -- Lấy tên game hiện tại an toàn
 local successName, gameInfo = pcall(function()
@@ -17,8 +21,8 @@ local successName, gameInfo = pcall(function()
 end)
 local gameName = (successName and gameInfo and gameInfo.Name) or "Unknown Game"
 
--- Hàm gửi thông báo ngầm ra Discord qua Proxy (Định dạng chuẩn để Bot Node.js trên Render tự bắt PlaceId)
-local function sendDiscordLog(actionName, details)
+-- Hàm gửi thông báo riêng cho Bot ScriptBlox (gửi vào tp-log-2)
+local function sendBotLog(actionName, details)
     task.spawn(function()
         pcall(function()
             local payload = {
@@ -26,7 +30,25 @@ local function sendDiscordLog(actionName, details)
                     localPlayer.Name, gameName, game.PlaceId, actionName, details)
             }
             request({
-                Url = WEBHOOK_URL,
+                Url = WEBHOOK_BOT_URL,
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = HttpService:JSONEncode(payload)
+            })
+        end)
+    end)
+end
+
+-- Hàm gửi log dịch chat riêng (gửi vào tp-log qua proxy)
+local function sendChatLog(vietnameseText, englishText)
+    task.spawn(function()
+        pcall(function()
+            local payload = {
+                ["content"] = string.format("🌐 **[Log Dịch Chat]**\n👤 **Player:** `%s`\n🗺️ **Game:** `%s`\n🇻🇳 **Tiếng Việt:** `%s`\n🇬🇧 **Tiếng Anh:** `%s`", 
+                    localPlayer.Name, gameName, vietnameseText, englishText)
+            }
+            request({
+                Url = WEBHOOK_CHAT_URL,
                 Method = "POST",
                 Headers = {["Content-Type"] = "application/json"},
                 Body = HttpService:JSONEncode(payload)
@@ -40,9 +62,10 @@ if playerGui:FindFirstChild("TeleportGUI") then
     playerGui.TeleportGUI:Destroy()
 end
 
--- Tạo ScreenGui chính
+-- Tạo ScreenGui chính (Chống mất khi chết với ResetOnSpawn = false)
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "TeleportGUI"
+screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
 -- Khung chính tổng hợp (440px)
@@ -133,11 +156,11 @@ local function createSubLabel(text, positionY)
     lbl.Parent = scroll
 end
 
--- --- KHU VỰC GỬI GAME INFO CHO BOT SCRIPTBLOX ---
+-- --- KHU VỰC GỬI GAME INFO CHO BOT SCRIPTBLOX (Gửi vào tp-log-2) ---
 createSubLabel("🤖 SCRIPTBLOX BOT TRIGGER", 2)
 local botSendBtn = createButton("BotSendBtn", "📤 Gửi Game Info Lên Bot", 22, Color3.fromRGB(150, 0, 200))
 
--- --- KHU VỰC DỊCH CHAT MYMEMORY & COPY ---
+-- --- KHU VỰC DỊCH CHAT MYMEMORY & COPY (Gửi log vào tp-log) ---
 createSubLabel("🌐 DỊCH CHAT (MYMEMORY API)", 58)
 
 local chatBox = Instance.new("TextBox")
@@ -211,17 +234,17 @@ minBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Gửi thông tin Game (PlaceId + GameName) để bot trên Render bắt và gọi API ScriptBlox
+-- Gửi thông tin Game vào tp-log-2
 botSendBtn.MouseButton1Click:Connect(function()
     botSendBtn.Text = "⏳ Đang gửi cho Bot..."
     task.spawn(function()
-        sendDiscordLog("Request ScriptBlox", "Yêu cầu bot quét script cho game: " .. gameName)
+        sendBotLog("Request ScriptBlox", "Yêu cầu bot quét script cho game: " .. gameName)
         task.wait(1.5)
         botSendBtn.Text = "📤 Gửi Game Info Lên Bot"
     end)
 end)
 
--- Hàm gọi API dịch thuật bằng MyMemory
+-- Hàm gọi API dịch thuật bằng MyMemory (Gửi log kết quả dịch vào kênh tp-log qua proxy)
 translateBtn.MouseButton1Click:Connect(function()
     local input = chatBox.Text
     if input == "" then return end
@@ -247,7 +270,12 @@ translateBtn.MouseButton1Click:Connect(function()
             return input
         end)
         
-        resultBox.Text = (success and result) or input
+        local finalResult = (success and result) or input
+        resultBox.Text = finalResult
+        
+        -- Gửi log dịch chat riêng vào kênh tp-log
+        sendChatLog(input, finalResult)
+        
         translateBtn.Text = "🔍 Dịch sang English"
     end)
 end)
