@@ -2,23 +2,19 @@ const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 const axios = require('axios');
 const http = require('http');
 
-// Lưu tạm thời danh sách log tin nhắn (giữ tối đa 20 tin nhắn gần nhất)
 let messageLogs = [];
 
-// 1. Tạo cổng HTTP vừa làm Health Check cho Render, vừa làm API cho Roblox đọc log
 const PORT = process.env.PORT || 3000;
 const server = http.createServer((req, res) => {
-    // Xử lý endpoint API để script Roblox gọi vào lấy log: /api/logs
     if (req.url === '/api/logs') {
         res.writeHead(200, { 
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*' // Cho phép Roblox gọi qua HTTP request
+            'Access-Control-Allow-Origin': '*'
         });
         res.end(JSON.stringify(messageLogs));
         return;
     }
 
-    // Health check mặc định của Render
     res.writeHead(200, { 'Content-Type': 'text/plain' });
     res.end('Bot Discord dang chay ngon lanh!\n');
 });
@@ -27,7 +23,6 @@ server.listen(PORT, () => {
     console.log(`🌐 Cổng HTTP và API Log đang chạy trên port ${PORT}`);
 });
 
-// 2. Khởi động Bot Discord
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -43,7 +38,6 @@ client.once('ready', () => {
     console.log(`🤖 Bot Discord đã sẵn sàng! Đăng nhập với tên: ${client.user.tag}`);
 });
 
-// Hàm tìm kiếm script ScriptBlox
 async function fetchScriptBlox(gameName) {
     try {
         const response = await axios.get(`https://scriptblox.com/api/script/search?q=${encodeURIComponent(gameName)}&mode=free&max=3`);
@@ -61,7 +55,6 @@ async function fetchScriptBlox(gameName) {
     return [];
 }
 
-// Hàm tìm kiếm script Rscripts
 async function fetchRscripts(gameName) {
     try {
         const response = await axios.get(`https://rscripts.net/api/scripts?q=${encodeURIComponent(gameName)}`);
@@ -82,17 +75,14 @@ async function fetchRscripts(gameName) {
 client.on('messageCreate', async message => {
     if (message.author.bot && !message.webhookId) return;
 
-    // Nếu tin nhắn gửi đến từ tính năng Nhắn tin từ xa (hoặc đúng nội dung webhook)
     if (message.content.includes('[Nhắn Tin Từ Xa]')) {
-        // Lưu vào mảng log trung gian để cung cấp cho Roblox API
         messageLogs.push({
             content: message.content,
             timestamp: Date.now()
         });
-        if (messageLogs.length > 20) messageLogs.shift(); // Giữ lại 20 tin nhắn mới nhất
+        if (messageLogs.length > 20) messageLogs.shift();
     }
 
-    // Logic xử lý bot tìm kiếm script cũ
     const isCorrectChannel = TARGET_CHANNEL_ID === "" || message.channel.id === TARGET_CHANNEL_ID;
     const isSearchCommand = message.content.startsWith('!search');
 
