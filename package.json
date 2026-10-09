@@ -1,12 +1,13 @@
 {
   "name": "hacksuper2-bot",
   "version": "1.0.0",
-  "description": "Multi Discord Bots",
+  "description": "Multi Discord Bots with Axios",
   "main": "index.js",
   "scripts": {
     "start": "node index.js & node indexinfo.js"
   },
   "dependencies": {
+    "axios": "^1.6.8",
     "discord.js": "^14.14.0"
   }
 }
