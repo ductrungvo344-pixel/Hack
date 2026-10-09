@@ -248,7 +248,7 @@ end
 
 addLogMessage("system: Đã kết nối Script thành công!", "sys_init")
 
--- Vòng lặp ngầm tự động fetch log từ API bot Render mỗi 4 giây
+-- Vòng lặp ngầm tự động fetch log từ API bot Render mỗi 4 giây (chống lặp bằng ID)
 task.spawn(function()
     while true do
         pcall(function()
@@ -420,7 +420,7 @@ copyBtn.MouseButton1Click:Connect(function()
         copyBtn.Text = "✅ Đã Copy!"
         task.wait(1.5)
         copyBtn.Text = "📋 Copy Bản Dịch"
-    end
+    end)
 end)
 
 -- Nameless Admin
