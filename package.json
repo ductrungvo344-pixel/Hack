@@ -1,10 +1,10 @@
 {
   "name": "hacksuper2-bot",
   "version": "1.0.0",
-  "description": "Dual Discord Bots",
+  "description": "Discord Script Search Bot",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js & node indexinfo.js"
+    "start": "node index.js"
   },
   "dependencies": {
     "axios": "^1.6.8",
