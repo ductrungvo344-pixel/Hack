@@ -1,18 +1,11 @@
 -- =================================================================
--- SCRIPT ALL-IN-ONE (FIXED): ĐỢI LOAD + CHỐNG LẶP + MENU FULL
+-- SCRIPT ALL-IN-ONE (ĐÃ BỎ LOG TIN NHẮN TỪ XA)
 -- =================================================================
-repeat task.wait() until game:GetService("Players").LocalPlayer
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
-
-repeat task.wait() until localPlayer:FindFirstChild("PlayerGui")
-local playerGui = localPlayer.PlayerGui
-
+local playerGui = localPlayer:WaitForChild("PlayerGui")
 local HttpService = game:GetService("HttpService")
 local MarketService = game:GetService("MarketplaceService")
-
--- Link API log trung gian trên Render của cậu
-local API_LOG_URL = "https://hacksuper2.onrender.com/api/logs"
 
 -- 1. Webhook kênh tp-log-2 (Dành cho Bot ScriptBlox & Rscripts)
 local rawWebhookBot = "https://discord.com/api/webhooks/1556970046679547924/GYvAH0yk3kFrs1YiO8w485O4Sv3w9ZHDFQ7WYBVoFlCS1Ih9AVGNBICeFxhob1prIbAn"
@@ -21,10 +14,6 @@ local WEBHOOK_BOT_URL = "https://cf-discord-proxy.numelon-web-services.workers.d
 -- 2. Webhook kênh tp-log (Dành riêng cho Log Dịch Chat qua Proxy)
 local rawWebhookChat = "https://discord.com/api/webhooks/1556960491086155776/qv4XW06rSiS1cvwTYszxAYyBJwrmJ9gBlp-9R4CTgxlxkEYvSLguUG9tQXqxg15tTefP"
 local WEBHOOK_CHAT_URL = "https://cf-discord-proxy.numelon-web-services.workers.dev/?url=" .. rawWebhookChat
-
--- 3. Webhook kênh thông-báo-hoặc-tin-nhắn-từ-script
-local rawWebhookNoti = "https://discord.com/api/webhooks/1558110251570696202/QjzNJ-ZVxdysJynSnuBxVY1x8yXcxD3DhK4v6mvP9JEVA0hYbCqBwM1GiO2RhM5JvtCx"
-local WEBHOOK_NOTI_URL = "https://cf-discord-proxy.numelon-web-services.workers.dev/?url=" .. rawWebhookNoti
 
 -- Lấy tên game hiện tại an toàn
 local successName, gameInfo = pcall(function()
@@ -35,28 +24,6 @@ local gameName = (successName and gameInfo and gameInfo.Name) or "Unknown Game"
 -- Kiểm tra PlaceId chỉ định (10033751448)
 local isTargetGame = (game.PlaceId == 10033751448)
 
-local addLogMessage
-
--- Hàm gửi tin nhắn từ xa đến Discord
-local function sendRemoteMessage(customMessage)
-    task.spawn(function()
-        pcall(function()
-            local payload = {
-                ["content"] = string.format("💬 **[Nhắn Tin Từ Xa]**\n👤 **Player:** `%s`\n🗺️ **Game:** `%s`\n✉️ **Nội dung:** `%s`", 
-                    localPlayer.Name, gameName, customMessage)
-            }
-            if request then
-                request({
-                    Url = WEBHOOK_NOTI_URL,
-                    Method = "POST",
-                    Headers = {["Content-Type"] = "application/json"},
-                    Body = HttpService:JSONEncode(payload)
-                })
-            end
-        end)
-    end)
-end
-
 -- Hàm gửi thông tin cho Bot ScriptBlox
 local function sendBotLog(actionName, details)
     task.spawn(function()
@@ -65,14 +32,12 @@ local function sendBotLog(actionName, details)
                 ["content"] = string.format("[ScriptBlox Bot Trigger]\n🗺️ **Game Name:** `%s`\n🆔 **PlaceId:** `%d`\n📌 **Hành động:** `%s`\n💬 **Data:** `%s`", 
                     gameName, game.PlaceId, actionName, details)
             }
-            if request then
-                request({
-                    Url = WEBHOOK_BOT_URL,
-                    Method = "POST",
-                    Headers = {["Content-Type"] = "application/json"},
-                    Body = HttpService:JSONEncode(payload)
-                })
-            end
+            request({
+                Url = WEBHOOK_BOT_URL,
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = HttpService:JSONEncode(payload)
+            })
         end)
     end)
 end
@@ -85,14 +50,12 @@ local function sendChatLog(vietnameseText, englishText)
                 ["content"] = string.format("🌐 **[Log Dịch Chat]**\n👤 **Player:** `%s`\n🗺️ **Game:** `%s`\n🇻🇳 **Tiếng Việt:** `%s`\n🇬🇧 **Tiếng Anh:** `%s`", 
                     localPlayer.Name, gameName, vietnameseText, englishText)
             }
-            if request then
-                request({
-                    Url = WEBHOOK_CHAT_URL,
-                    Method = "POST",
-                    Headers = {["Content-Type"] = "application/json"},
-                    Body = HttpService:JSONEncode(payload)
-                })
-            end
+            request({
+                Url = WEBHOOK_CHAT_URL,
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = HttpService:JSONEncode(payload)
+            })
         end)
     end)
 end
@@ -102,15 +65,15 @@ if playerGui:FindFirstChild("TeleportGUI") then
     playerGui.TeleportGUI:Destroy()
 end
 
--- Tạo ScreenGui chính (Chống mất khi chết với ResetOnSpawn = false)
+-- Tạo ScreenGui chính
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "TeleportGUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
--- Khung chính tổng hợp (480px)
+-- Khung chính tổng hợp (Thu gọn lại còn 380px vì đã bỏ khung log chat)
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 220, 0, 480)
+frame.Size = UDim2.new(0, 220, 0, 380)
 frame.Position = UDim2.new(0.05, 0, 0.22, 0)
 frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 frame.BorderSizePixel = 0
@@ -151,11 +114,11 @@ minCorner.Parent = minBtn
 
 -- ScrollingFrame chứa các tính năng cuộn mượt mà
 local scroll = Instance.new("ScrollingFrame")
-scroll.Size = UDim2.new(0.95, 0, 0, 435)
+scroll.Size = UDim2.new(0.95, 0, 0, 335)
 scroll.Position = UDim2.new(0.025, 0, 0, 35)
 scroll.BackgroundTransparency = 1
 scroll.BorderSizePixel = 0
-scroll.CanvasSize = UDim2.new(0, 0, 0, 780)
+scroll.CanvasSize = UDim2.new(0, 0, 0, 680)
 scroll.ScrollBarThickness = 4
 scroll.Parent = frame
 
@@ -196,100 +159,16 @@ local function createSubLabel(text, positionY)
     return lbl
 end
 
--- --- KHU VỰC NHẮN TIN TỪ XA & LỊCH SỬ CHUNG ---
-createSubLabel("💬 NHẮN TIN TỪ XA & LỊCH SỬ CHUNG", 2)
-
-local msgBox = Instance.new("TextBox")
-msgBox.Size = UDim2.new(0.95, 0, 0, 28)
-msgBox.Position = UDim2.new(0.02, 0, 0, 22)
-msgBox.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-msgBox.PlaceholderText = "Nhập tin nhắn..."
-msgBox.Text = ""
-msgBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-msgBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
-msgBox.TextSize = 11
-msgBox.Font = Enum.Font.Gotham
-msgBox.ClearTextOnFocus = false
-msgBox.Parent = scroll
-
-local msgCorner = Instance.new("UICorner")
-msgCorner.CornerRadius = UDim.new(0, 4)
-msgCorner.Parent = msgBox
-
-local sendMsgBtn = createButton("SendMsgBtn", "📤 Gửi Tin Nhắn", 54, Color3.fromRGB(0, 150, 150))
-
--- Khung hiển thị lịch sử chat trực tiếp trên GUI
-local chatLogFrame = Instance.new("ScrollingFrame")
-chatLogFrame.Size = UDim2.new(0.95, 0, 0, 80)
-chatLogFrame.Position = UDim2.new(0.02, 0, 0, 84)
-chatLogFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-chatLogFrame.BorderSizePixel = 0
-chatLogFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-chatLogFrame.ScrollBarThickness = 3
-chatLogFrame.Parent = scroll
-
-local logCorner = Instance.new("UICorner")
-logCorner.CornerRadius = UDim.new(0, 4)
-logCorner.Parent = chatLogFrame
-
-local logLayout = Instance.new("UIListLayout")
-logLayout.SortOrder = Enum.SortOrder.LayoutOrder
-logLayout.Padding = UDim.new(0, 2)
-logLayout.Parent = chatLogFrame
-
-local displayedLogs = {}
-addLogMessage = function(text, id)
-    if displayedLogs[id] then return end
-    displayedLogs[id] = true
-
-    local logItem = Instance.new("TextLabel")
-    logItem.Size = UDim2.new(1, 0, 0, 18)
-    logItem.BackgroundTransparency = 1
-    logItem.Text = text
-    logItem.TextColor3 = Color3.fromRGB(0, 255, 200)
-    logItem.TextSize = 10
-    logItem.Font = Enum.Font.Code
-    logItem.TextXAlignment = Enum.TextXAlignment.Left
-    logItem.Parent = chatLogFrame
-    
-    chatLogFrame.CanvasSize = UDim2.new(0, 0, 0, logLayout.AbsoluteContentSize.Y)
-    chatLogFrame.CanvasPosition = Vector2.new(0, chatLogFrame.CanvasSize.Y.Offset)
-end
-
-addLogMessage("system: Đã kết nối Script thành công!", "sys_init")
-
--- Vòng lặp ngầm tự động fetch log từ API bot Render mỗi 4 giây
-task.spawn(function()
-    while true do
-        pcall(function()
-            if request then
-                local res = request({
-                    Url = API_LOG_URL,
-                    Method = "GET"
-                })
-                if res and res.StatusCode == 200 then
-                    local logs = HttpService:JSONDecode(res.Body)
-                    for _, log in ipairs(logs) do
-                        local logId = log.content .. tostring(log.timestamp)
-                        addLogMessage(log.content, logId)
-                    end
-                end
-            end
-        end)
-        task.wait(4)
-    end
-end)
-
 -- --- KHU VỰC GỬI GAME INFO CHO BOT SCRIPTBLOX ---
-createSubLabel("🤖 SCRIPTBLOX BOT TRIGGER", 170)
-local botSendBtn = createButton("BotSendBtn", "📤 Gửi Game Info Lên Bot", 190, Color3.fromRGB(150, 0, 200))
+createSubLabel("🤖 SCRIPTBLOX BOT TRIGGER", 2)
+local botSendBtn = createButton("BotSendBtn", "📤 Gửi Game Info Lên Bot", 22, Color3.fromRGB(150, 0, 200))
 
 -- --- KHU VỰC DỊCH CHAT MYMEMORY & COPY ---
-createSubLabel("🌐 DỊCH CHAT (MYMEMORY API)", 226)
+createSubLabel("🌐 DỊCH CHAT (MYMEMORY API)", 58)
 
 local chatBox = Instance.new("TextBox")
 chatBox.Size = UDim2.new(0.95, 0, 0, 28)
-chatBox.Position = UDim2.new(0.02, 0, 0, 246)
+chatBox.Position = UDim2.new(0.02, 0, 0, 78)
 chatBox.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 chatBox.PlaceholderText = "Nhập tiếng Việt cần dịch..."
 chatBox.Text = ""
@@ -304,11 +183,11 @@ local boxCorner = Instance.new("UICorner")
 boxCorner.CornerRadius = UDim.new(0, 4)
 boxCorner.Parent = chatBox
 
-local translateBtn = createButton("TransBtn", "🔍 Dịch sang English", 278, Color3.fromRGB(0, 120, 255))
+local translateBtn = createButton("TransBtn", "🔍 Dịch sang English", 110, Color3.fromRGB(0, 120, 255))
 
 local resultBox = Instance.new("TextBox")
 resultBox.Size = UDim2.new(0.95, 0, 0, 28)
-resultBox.Position = UDim2.new(0.02, 0, 0, 308)
+resultBox.Position = UDim2.new(0.02, 0, 0, 140)
 resultBox.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 resultBox.PlaceholderText = "Bản dịch tiếng Anh..."
 resultBox.Text = ""
@@ -323,26 +202,26 @@ local resCorner = Instance.new("UICorner")
 resCorner.CornerRadius = UDim.new(0, 4)
 resCorner.Parent = resultBox
 
-local copyBtn = createButton("CopyBtn", "📋 Copy Bản Dịch", 340, Color3.fromRGB(0, 180, 90))
+local copyBtn = createButton("CopyBtn", "📋 Copy Bản Dịch", 172, Color3.fromRGB(0, 180, 90))
 
 -- --- SẮP XẾP CÁC NÚT KHÁC (ẨN HIỆN THEO PLACEID) ---
-local adminLbl = createSubLabel("🛠️ SCRIPT KHÁC", 378)
-local adminBtn = createButton("Admin", "👑 Nameless Admin", 398, Color3.fromRGB(255, 140, 0))
+local adminLbl = createSubLabel("🛠️ SCRIPT KHÁC", 210)
+local adminBtn = createButton("Admin", "👑 Nameless Admin", 230, Color3.fromRGB(255, 140, 0))
 
-local smvLbl = createSubLabel("🔥 SUPER MEGA VIP", 432)
-local smv1 = createButton("SMV1", "1. (-95, 17633, 9039)", 452, Color3.fromRGB(0, 150, 230))
-local smv2 = createButton("SMV2", "2. (-124, 17633, 9043)", 480, Color3.fromRGB(0, 150, 230))
-local smv3 = createButton("SMV3", "3. (-82, 17633, 9044)", 508, Color3.fromRGB(0, 150, 230))
+local smvLbl = createSubLabel("🔥 SUPER MEGA VIP", 264)
+local smv1 = createButton("SMV1", "1. (-95, 17633, 9039)", 284, Color3.fromRGB(0, 150, 230))
+local smv2 = createButton("SMV2", "2. (-124, 17633, 9043)", 312, Color3.fromRGB(0, 150, 230))
+local smv3 = createButton("SMV3", "3. (-82, 17633, 9044)", 340, Color3.fromRGB(0, 150, 230))
 
-local vipLbl = createSubLabel("💎 VIP", 538)
-local vip1 = createButton("VIP1", "1. (-94, 17633, 9357)", 558, Color3.fromRGB(0, 180, 90))
+local vipLbl = createSubLabel("💎 VIP", 370)
+local vip1 = createButton("VIP1", "1. (-94, 17633, 9357)", 390, Color3.fromRGB(0, 180, 90))
 
-local mvLbl = createSubLabel("⭐ MEGA VIP", 588)
-local mv1 = createButton("MV1", "1. (-88, 17633, 9224)", 608, Color3.fromRGB(150, 0, 230))
-local mv2 = createButton("MV2", "2. (-112, 17633, 9224)", 636, Color3.fromRGB(150, 0, 230))
+local mvLbl = createSubLabel("⭐ MEGA VIP", 420)
+local mv1 = createButton("MV1", "1. (-88, 17633, 9224)", 440, Color3.fromRGB(150, 0, 230))
+local mv2 = createButton("MV2", "2. (-112, 17633, 9224)", 468, Color3.fromRGB(150, 0, 230))
 
-local navLbl = createSubLabel("⚙️ ĐIỀU HƯỚNG", 666)
-local backBtn = createButton("Back", "🔄 Quay lại chỗ cũ", 686, Color3.fromRGB(230, 70, 70))
+local navLbl = createSubLabel("⚙️ ĐIỀU HƯỚNG", 498)
+local backBtn = createButton("Back", "🔄 Quay lại chỗ cũ", 518, Color3.fromRGB(230, 70, 70))
 
 -- Tự động ẩn các nút TP và Admin nếu không phải game chỉ định
 if not isTargetGame then
@@ -365,22 +244,8 @@ end
 minBtn.MouseButton1Click:Connect(function()
     local isOpen = scroll.Visible
     scroll.Visible = not isOpen
-    frame.Size = isOpen and UDim2.new(0, 220, 0, 35) or UDim2.new(0, 220, 0, 480)
+    frame.Size = isOpen and UDim2.new(0, 220, 0, 35) or UDim2.new(0, 220, 0, 380)
     minBtn.Text = isOpen and "+" or "-"
-end)
-
--- Gửi tin nhắn từ xa khi bấm nút
-sendMsgBtn.MouseButton1Click:Connect(function()
-    local text = msgBox.Text
-    if text == "" then return end
-    
-    sendMsgBtn.Text = "⏳ Đang gửi..."
-    task.spawn(function()
-        sendRemoteMessage(text)
-        task.wait(1.5)
-        sendMsgBtn.Text = "📤 Gửi Tin Nhắn"
-        msgBox.Text = ""
-    end)
 end)
 
 -- Gửi thông tin Game vào tp-log-2
@@ -402,17 +267,15 @@ translateBtn.MouseButton1Click:Connect(function()
     
     task.spawn(function()
         local success, result = pcall(function()
-            if request then
-                local res = request({
-                    Url = "https://api.mymemory.translated.net/get?q=" .. HttpService:UrlEncode(input) .. "&langpair=vi|en",
-                    Method = "GET"
-                })
-                
-                if res and res.StatusCode == 200 then
-                    local data = HttpService:JSONDecode(res.Body)
-                    if data and data.responseData and data.responseData.translatedText then
-                        return data.responseData.translatedText
-                    end
+            local res = request({
+                Url = "https://api.mymemory.translated.net/get?q=" .. HttpService:UrlEncode(input) .. "&langpair=vi|en",
+                Method = "GET"
+            })
+            
+            if res and res.StatusCode == 200 then
+                local data = HttpService:JSONDecode(res.Body)
+                if data and data.responseData and data.responseData.translatedText then
+                    return data.responseData.translatedText
                 end
             end
             return input
@@ -434,7 +297,7 @@ copyBtn.MouseButton1Click:Connect(function()
         copyBtn.Text = "✅ Đã Copy!"
         task.wait(1.5)
         copyBtn.Text = "📋 Copy Bản Dịch"
-    end)
+    end
 end)
 
 -- Nameless Admin
