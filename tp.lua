@@ -1,9 +1,13 @@
 -- =================================================================
--- SCRIPT ALL-IN-ONE (FULL): MENU + ĐỒNG BỘ LOG CHAT + DỊCH + BOT
+-- SCRIPT ALL-IN-ONE (FIXED): ĐỢI LOAD + CHỐNG LẶP + MENU FULL
 -- =================================================================
+repeat task.wait() until game:GetService("Players").LocalPlayer
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
-local playerGui = localPlayer:WaitForChild("PlayerGui")
+
+repeat task.wait() until localPlayer:FindFirstChild("PlayerGui")
+local playerGui = localPlayer.PlayerGui
+
 local HttpService = game:GetService("HttpService")
 local MarketService = game:GetService("MarketplaceService")
 
@@ -41,12 +45,14 @@ local function sendRemoteMessage(customMessage)
                 ["content"] = string.format("💬 **[Nhắn Tin Từ Xa]**\n👤 **Player:** `%s`\n🗺️ **Game:** `%s`\n✉️ **Nội dung:** `%s`", 
                     localPlayer.Name, gameName, customMessage)
             }
-            request({
-                Url = WEBHOOK_NOTI_URL,
-                Method = "POST",
-                Headers = {["Content-Type"] = "application/json"},
-                Body = HttpService:JSONEncode(payload)
-            })
+            if request then
+                request({
+                    Url = WEBHOOK_NOTI_URL,
+                    Method = "POST",
+                    Headers = {["Content-Type"] = "application/json"},
+                    Body = HttpService:JSONEncode(payload)
+                })
+            end
         end)
     end)
 end
@@ -59,12 +65,14 @@ local function sendBotLog(actionName, details)
                 ["content"] = string.format("[ScriptBlox Bot Trigger]\n🗺️ **Game Name:** `%s`\n🆔 **PlaceId:** `%d`\n📌 **Hành động:** `%s`\n💬 **Data:** `%s`", 
                     gameName, game.PlaceId, actionName, details)
             }
-            request({
-                Url = WEBHOOK_BOT_URL,
-                Method = "POST",
-                Headers = {["Content-Type"] = "application/json"},
-                Body = HttpService:JSONEncode(payload)
-            })
+            if request then
+                request({
+                    Url = WEBHOOK_BOT_URL,
+                    Method = "POST",
+                    Headers = {["Content-Type"] = "application/json"},
+                    Body = HttpService:JSONEncode(payload)
+                })
+            end
         end)
     end)
 end
@@ -77,12 +85,14 @@ local function sendChatLog(vietnameseText, englishText)
                 ["content"] = string.format("🌐 **[Log Dịch Chat]**\n👤 **Player:** `%s`\n🗺️ **Game:** `%s`\n🇻🇳 **Tiếng Việt:** `%s`\n🇬🇧 **Tiếng Anh:** `%s`", 
                     localPlayer.Name, gameName, vietnameseText, englishText)
             }
-            request({
-                Url = WEBHOOK_CHAT_URL,
-                Method = "POST",
-                Headers = {["Content-Type"] = "application/json"},
-                Body = HttpService:JSONEncode(payload)
-            })
+            if request then
+                request({
+                    Url = WEBHOOK_CHAT_URL,
+                    Method = "POST",
+                    Headers = {["Content-Type"] = "application/json"},
+                    Body = HttpService:JSONEncode(payload)
+                })
+            end
         end)
     end)
 end
@@ -248,19 +258,21 @@ end
 
 addLogMessage("system: Đã kết nối Script thành công!", "sys_init")
 
--- Vòng lặp ngầm tự động fetch log từ API bot Render mỗi 4 giây (chống lặp bằng ID)
+-- Vòng lặp ngầm tự động fetch log từ API bot Render mỗi 4 giây
 task.spawn(function()
     while true do
         pcall(function()
-            local res = request({
-                Url = API_LOG_URL,
-                Method = "GET"
-            })
-            if res and res.StatusCode == 200 then
-                local logs = HttpService:JSONDecode(res.Body)
-                for _, log in ipairs(logs) do
-                    local logId = log.content .. tostring(log.timestamp)
-                    addLogMessage(log.content, logId)
+            if request then
+                local res = request({
+                    Url = API_LOG_URL,
+                    Method = "GET"
+                })
+                if res and res.StatusCode == 200 then
+                    local logs = HttpService:JSONDecode(res.Body)
+                    for _, log in ipairs(logs) do
+                        local logId = log.content .. tostring(log.timestamp)
+                        addLogMessage(log.content, logId)
+                    end
                 end
             end
         end)
@@ -390,15 +402,17 @@ translateBtn.MouseButton1Click:Connect(function()
     
     task.spawn(function()
         local success, result = pcall(function()
-            local res = request({
-                Url = "https://api.mymemory.translated.net/get?q=" .. HttpService:UrlEncode(input) .. "&langpair=vi|en",
-                Method = "GET"
-            })
-            
-            if res and res.StatusCode == 200 then
-                local data = HttpService:JSONDecode(res.Body)
-                if data and data.responseData and data.responseData.translatedText then
-                    return data.responseData.translatedText
+            if request then
+                local res = request({
+                    Url = "https://api.mymemory.translated.net/get?q=" .. HttpService:UrlEncode(input) .. "&langpair=vi|en",
+                    Method = "GET"
+                })
+                
+                if res and res.StatusCode == 200 then
+                    local data = HttpService:JSONDecode(res.Body)
+                    if data and data.responseData and data.responseData.translatedText then
+                        return data.responseData.translatedText
+                    end
                 end
             end
             return input
