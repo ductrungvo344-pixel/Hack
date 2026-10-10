@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT CHÍNH TỔNG HỢP (tp.lua) - ĐÃ FIX LỖI ANIMATION KHI RESPAWN
+-- SCRIPT CHÍNH TỔNG HỢP (tp.lua) - ĐÃ CẬP NHẬT PROXY WORKER MỚI
 -- =================================================================
 print("⏳ Đang khởi chạy tp.lua...")
 
@@ -20,12 +20,12 @@ task.spawn(function()
     end
 end)
 
--- 1. Webhook cấu hình
+-- 1. Webhook cấu hình (Đã cập nhật Proxy Worker cá nhân)
 local rawWebhookBot = "https://discord.com/api/webhooks/1556970046679547924/GYvAH0yk3kFrs1YiO8w485O4Sv3w9ZHDFQ7WYBVoFlCS1Ih9AVGNBICeFxhob1prIbAn"
-local WEBHOOK_BOT_URL = "https://cf-discord-proxy.numelon-web-services.workers.dev/?url=" .. rawWebhookBot
+local WEBHOOK_BOT_URL = "https://Young-resonance-704f.ductrungvo344.workers.dev/?url=" .. rawWebhookBot
 
 local rawWebhookChat = "https://discord.com/api/webhooks/1556960491086155776/qv4XW06rSiS1cvwTYszxAYyBJwrmJ9gBlp-9R4CTgxlxkEYvSLguUG9tQXqxg15tTefP"
-local WEBHOOK_CHAT_URL = "https://cf-discord-proxy.numelon-web-services.workers.dev/?url=" .. rawWebhookChat
+local WEBHOOK_CHAT_URL = "https://Young-resonance-704f.ductrungvo344.workers.dev/?url=" .. rawWebhookChat
 
 local successName, gameInfo = pcall(function()
     return MarketService:GetProductInfo(game.PlaceId)
@@ -325,7 +325,7 @@ adminBtn.MouseButton1Click:Connect(function()
     pcall(function() loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Nameless-Admin-23304"))() end)
 end)
 
--- 5. KURDISH ANIMATIONS SECTION (ĐÃ FIX KHI RESPAWN)
+-- 5. KURDISH ANIMATIONS SECTION
 local animSectionLabel = createSubLabel("💃 ANIMATIONS", currentY)
 currentY = currentY + 20
 
@@ -359,7 +359,6 @@ local function setupAnimations(character)
     local normalColor = isR15 and Color3.fromRGB(110, 115, 140) or Color3.fromRGB(180, 140, 60)
     local activeColor = isR15 and Color3.fromRGB(140, 160, 220) or Color3.fromRGB(230, 180, 70)
 
-    -- Xóa các nút cũ nếu respawn để vẽ lại chính xác
     for _, btn in pairs(animButtons) do
         btn:Destroy()
     end
@@ -403,12 +402,10 @@ local function setupAnimations(character)
     scroll.CanvasSize = UDim2.new(0, 0, 0, startY + 30)
 end
 
--- Khởi tạo lần đầu
 if localPlayer.Character then
     setupAnimations(localPlayer.Character)
 end
 
--- Tự động gán lại Animation khi nhân vật Respawn
 localPlayer.CharacterAdded:Connect(function(char)
     task.wait(0.5)
     setupAnimations(char)
@@ -421,4 +418,4 @@ minBtn.MouseButton1Click:Connect(function()
     minBtn.Text = isOpen and "+" or "-"
 end)
 
-print("🎉 Khởi chạy thành công tp.lua (Đã fix lỗi Animation sau khi chết)!")
+print("🎉 Khởi chạy thành công tp.lua với Proxy Worker cá nhân!")
