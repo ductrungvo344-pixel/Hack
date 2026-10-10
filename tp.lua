@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT ALL-IN-ONE (ĐÃ BỎ LOG TIN NHẮN TỪ XA)
+-- SCRIPT ALL-IN-ONE (TỰ ĐỘNG GỬI TỪ KHÓA GỐC & TỪ KHÓA TIẾNG ANH)
 -- =================================================================
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
@@ -21,16 +21,32 @@ local successName, gameInfo = pcall(function()
 end)
 local gameName = (successName and gameInfo and gameInfo.Name) or "Unknown Game"
 
+-- Hàm chuyển đổi nhanh từ khóa tiếng Việt sang tiếng Anh
+local function getEnglishKeyword(name)
+    local lowerName = string.lower(name)
+    if string.find(lowerName, "đấm bốc") then return "boxing"
+    elseif string.find(lowerName, "hải tặc") then return "piece"
+    elseif string.find(lowerName, "đua xe") then return "car racing"
+    elseif string.find(lowerName, "nuôi thú") then return "pet simulator"
+    elseif string.find(lowerName, "vượt chướng ngại vật") or string.find(lowerName, "nhảy") then return "obby"
+    elseif string.find(lowerName, "cá mập") then return "shark"
+    elseif string.find(lowerName, "súng") then return "gun"
+    elseif string.find(lowerName, "kiếm") then return "sword"
+    end
+    return name
+end
+
 -- Kiểm tra PlaceId chỉ định (10033751448)
 local isTargetGame = (game.PlaceId == 10033751448)
 
--- Hàm gửi thông tin cho Bot ScriptBlox
+-- Hàm gửi thông tin cho Bot ScriptBlox (Gửi cả từ khóa gốc và từ khóa tiếng Anh)
 local function sendBotLog(actionName, details)
     task.spawn(function()
         pcall(function()
+            local englishName = getEnglishKeyword(gameName)
             local payload = {
-                ["content"] = string.format("[ScriptBlox Bot Trigger]\n🗺️ **Game Name:** `%s`\n🆔 **PlaceId:** `%d`\n📌 **Hành động:** `%s`\n💬 **Data:** `%s`", 
-                    gameName, game.PlaceId, actionName, details)
+                ["content"] = string.format("[ScriptBlox Bot Trigger]\n🗺️ **Game Name:** `%s`\n🇬🇧 **English Query:** `%s`\n🆔 **PlaceId:** `%d`\n📌 **Hành động:** `%s`\n💬 **Data:** `%s`", 
+                    gameName, englishName, game.PlaceId, actionName, details)
             }
             request({
                 Url = WEBHOOK_BOT_URL,
@@ -71,7 +87,7 @@ screenGui.Name = "TeleportGUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
--- Khung chính tổng hợp (Thu gọn lại còn 380px vì đã bỏ khung log chat)
+-- Khung chính tổng hợp
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 220, 0, 380)
 frame.Position = UDim2.new(0.05, 0, 0.22, 0)
@@ -112,7 +128,7 @@ local minCorner = Instance.new("UICorner")
 minCorner.CornerRadius = UDim.new(0, 4)
 minCorner.Parent = minBtn
 
--- ScrollingFrame chứa các tính năng cuộn mượt mà
+-- ScrollingFrame chứa các tính năng cuộn
 local scroll = Instance.new("ScrollingFrame")
 scroll.Size = UDim2.new(0.95, 0, 0, 335)
 scroll.Position = UDim2.new(0.025, 0, 0, 35)
@@ -204,7 +220,7 @@ resCorner.Parent = resultBox
 
 local copyBtn = createButton("CopyBtn", "📋 Copy Bản Dịch", 172, Color3.fromRGB(0, 180, 90))
 
--- --- SẮP XẾP CÁC NÚT KHÁC (ẨN HIỆN THEO PLACEID) ---
+-- --- SẮP XẾP CÁC NÚT KHÁC ---
 local adminLbl = createSubLabel("🛠️ SCRIPT KHÁC", 210)
 local adminBtn = createButton("Admin", "👑 Nameless Admin", 230, Color3.fromRGB(255, 140, 0))
 
@@ -297,7 +313,7 @@ copyBtn.MouseButton1Click:Connect(function()
         copyBtn.Text = "✅ Đã Copy!"
         task.wait(1.5)
         copyBtn.Text = "📋 Copy Bản Dịch"
-    end
+    end)
 end)
 
 -- Nameless Admin
