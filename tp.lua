@@ -1,6 +1,8 @@
 -- =================================================================
--- SCRIPT CHÍNH (tp.lua) - TÍCH HỢP MODULE LƯU TRỮ TRUNG GIAN
+-- SCRIPT CHÍNH (tp.lua) - KẾT NỐI GAME_KEYWORD & PRINT CHECK
 -- =================================================================
+print("⏳ Đang khởi chạy tp.lua...")
+
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
 local playerGui = localPlayer:WaitForChild("PlayerGui")
@@ -24,26 +26,38 @@ local gameName = (successName and gameInfo and gameInfo.Name) or "Unknown Game"
 -- Kiểm tra PlaceId chỉ định (10033751448)
 local isTargetGame = (game.PlaceId == 10033751448)
 
--- Hàm gửi thông tin cho Bot ScriptBlox (Truyền data động sang file game_keyword.lua)
+-- Hàm gửi thông tin cho Bot ScriptBlox (Kết nối sang game_keyword.lua)
 local function sendBotLog(actionName, details)
     task.spawn(function()
         pcall(function()
-            -- Lấy module lưu trữ trung gian đã được loader.lua tải sẵn vào _G.GameStore
+            -- Lấy module trung gian đã load sẵn từ game_keyword.lua
             local GameStore = _G.GameStore
+            
             if not GameStore then
-                -- Backup gọi trực tiếp nếu chạy file độc lập không qua loader
+                print("⚠️ Chưa thấy _G.GameStore, tiến hành tải trực tiếp game_keyword.lua...")
                 local keywordUrl = "https://raw.githubusercontent.com/ductrungvo344-pixel/Hack/refs/heads/main/game_keyword.lua"
                 local success, res = pcall(function()
                     return loadstring(game:HttpGet(keywordUrl))()
                 end)
                 if success then GameStore = res end
             end
-            
-            if GameStore and GameStore.SaveData and GameStore.SendWebhook then
-                -- 1. Gửi dữ liệu động sang module trung gian để lưu trữ
-                GameStore.SaveData(gameName, details, game.PlaceId)
-                -- 2. Ra lệnh cho module trung gian xử lý bắn Webhook
-                GameStore.SendWebhook(WEBHOOK_BOT_URL, actionName, details)
+
+            if GameStore then
+                print("✅ Kết nối thành công với game_keyword.lua!")
+                
+                -- 1. Đẩy dữ liệu động sang module trung gian để lưu trữ
+                if GameStore.SaveData then
+                    GameStore.SaveData(gameName, details, game.PlaceId)
+                    print("📌 Đã gửi data sang game_keyword.lua lưu trữ!")
+                end
+                
+                -- 2. Ra lệnh cho module trung gian bắn Webhook
+                if GameStore.SendWebhook then
+                    GameStore.SendWebhook(WEBHOOK_BOT_URL, actionName, details)
+                    print("🚀 Đã gọi game_keyword.lua bắn Webhook!")
+                end
+            else
+                warn("❌ Không thể kết nối với game_keyword.lua!")
             end
         end)
     end)
@@ -258,11 +272,9 @@ end)
 -- Gửi thông tin Game vào tp-log-2
 botSendBtn.MouseButton1Click:Connect(function()
     botSendBtn.Text = "⏳ Đang gửi..."
-    task.spawn(function()
-        sendBotLog("Request ScriptBlox & Rscripts", "Yêu cầu quét script cho: " .. gameName)
-        task.wait(1.5)
-        botSendBtn.Text = "📤 Gửi Game Info Lên Bot"
-    end)
+    sendBotLog("Request ScriptBlox & Rscripts", "Yêu cầu quét script cho: " .. gameName)
+    task.wait(1.5)
+    botSendBtn.Text = "📤 Gửi Game Info Lên Bot"
 end)
 
 -- Hàm dịch chat
@@ -280,7 +292,7 @@ translateBtn.MouseButton1Click:Connect(function()
             })
             
             if res and res.StatusCode == 200 then
-                local data = HttpService:JSONDecode(res.Body)
+                local data = HttpService:JSONEncode(res.Body)
                 if data and data.responseData and data.responseData.translatedText then
                     return data.responseData.translatedText
                 end
@@ -304,7 +316,7 @@ copyBtn.MouseButton1Click:Connect(function()
         copyBtn.Text = "✅ Đã Copy!"
         task.wait(1.5)
         copyBtn.Text = "📋 Copy Bản Dịch"
-    end)
+    end
 end)
 
 -- Nameless Admin
@@ -333,7 +345,7 @@ smv2.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-124, 17633
 smv3.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-82, 17633, 9044)) end)
 vip1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-94, 17633, 9357)) end)
 mv1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-88, 17633, 9224)) end)
-mv2.MouseButton1Click:Connect(function() executeTeleport(CLine or CFrame.new(-112, 17633, 9224)) end)
+mv2.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-112, 17633, 9224)) end)
 
 backBtn.MouseButton1Click:Connect(function()
     if oldPosition then
@@ -347,3 +359,5 @@ backBtn.MouseButton1Click:Connect(function()
         end
     end
 end)
+
+print("🎉 ĐÃ CHẠY HOÀN TẤT GUI VÀ HIỂN THỊ THÀNH CÔNG!")
