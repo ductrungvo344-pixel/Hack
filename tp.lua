@@ -1,8 +1,7 @@
 -- =================================================================
--- SCRIPT CHÍNH TỔNG HỢP (tp.lua) - BẢN ĐẦY ĐỦ TIỆN ÍCH
--- TELEPORT + DỊCH CHAT + KURDISH ANIMATIONS + BOT TRIGGER + TRACKER
+-- SCRIPT CHÍNH TỔNG HỢP (tp.lua) - KHÔNG GHI ĐÈ VỊ TRÍ KHI TP LIÊN TỤC
 -- =================================================================
-print("⏳ Đang khởi chạy tp.lua bản tích hợp Tracker...")
+print("⏳ Đang khởi chạy tp.lua...")
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -73,80 +72,6 @@ local function sendChatLog(vietnameseText, englishText)
 end
 
 -- =================================================================
--- LOGIC HỆ THỐNG ĐỊNH VỊ VỊ TRÍ NGƯỜI CHƠI (PLAYER TRACKER)
--- =================================================================
-local trackerEnabled = false
-local trackerFolder = Instance.new("Folder", workspace)
-trackerFolder.Name = "PlayerTrackerFolder"
-
-local function createTrackerForPlayer(plr)
-    if plr == localPlayer then return end
-
-    local function addTag(character)
-        if not character then return end
-        local head = character:WaitForChild("Head", 5)
-        if not head or head:FindFirstChild("TrackerGui") then return end
-
-        local billboard = Instance.new("BillboardGui")
-        billboard.Name = "TrackerGui"
-        billboard.Adornee = head
-        billboard.Size = UDim2.new(0, 150, 0, 40)
-        billboard.StudsOffset = Vector3.new(0, 2.5, 0)
-        billboard.AlwaysOnTop = true
-        billboard.Parent = head
-
-        local label = Instance.new("TextLabel")
-        label.Size = UDim2.new(1, 0, 1, 0)
-        label.BackgroundTransparency = 1
-        label.TextColor3 = Color3.fromRGB(0, 255, 150)
-        label.TextStrokeTransparency = 0.2
-        label.Font = Enum.Font.GothamBold
-        label.TextSize = 11
-        label.Parent = billboard
-
-        -- Loop cập nhật khoảng cách liên tục
-        task.spawn(function()
-            while billboard and billboard.Parent and trackerEnabled do
-                local myChar = localPlayer.Character
-                local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
-                local targetRoot = character:FindFirstChild("HumanoidRootPart")
-
-                if myRoot and targetRoot then
-                    local dist = math.floor((myRoot.Position - targetRoot.Position).Magnitude)
-                    label.Text = string.format("👤 %s\n📏 %dm", plr.DisplayName, dist)
-                end
-                task.wait(0.2)
-            end
-        end)
-    end
-
-    if plr.Character then addTag(plr.Character) end
-    plr.CharacterAdded:Connect(addTag)
-end
-
-local function toggleTracker(state)
-    trackerEnabled = state
-    if not trackerEnabled then
-        for _, plr in pairs(Players:GetPlayers()) do
-            if plr.Character and plr.Character:FindFirstChild("Head") then
-                local gui = plr.Character.Head:FindFirstChild("TrackerGui")
-                if gui then gui:Destroy() end
-            end
-        end
-    else
-        for _, plr in pairs(Players:GetPlayers()) do
-            createTrackerForPlayer(plr)
-        end
-    end
-end
-
-Players.PlayerAdded:Connect(function(plr)
-    if trackerEnabled then
-        createTrackerForPlayer(plr)
-    end
-end)
-
--- =================================================================
 -- KHỞI TẠO GIAO DIỆN (GUI)
 -- =================================================================
 if playerGui:FindFirstChild("TeleportGUI") then
@@ -175,7 +100,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(0.7, 0, 0, 25)
 title.Position = UDim2.new(0.05, 0, 0, 5)
 title.BackgroundTransparency = 1
-title.Text = "⚡ MENU CHÍNH & TRACKER"
+title.Text = "⚡ MENU TELEPORT & TIỆN ÍCH"
 title.TextColor3 = Color3.fromRGB(255, 215, 0)
 title.TextSize = 11
 title.Font = Enum.Font.GothamBold
@@ -239,20 +164,70 @@ end
 
 local currentY = 2
 
--- 1. NÚT XÁC ĐỊNH VỊ TRÍ NGƯỜI CHƠI (TRACKER)
-createSubLabel("📍 VỊ TRÍ NGƯỜI CHƠI (TRACKER)", currentY)
-local trackerBtn = createButton("TrackerBtn", "📍 Hiện Vị Trí Player: OFF", currentY + 20, Color3.fromRGB(255, 70, 70))
-currentY = currentY + 52
+-- 1. TELEPORT SECTION (KHÔNG LƯU ĐÈ VỊ TRÍ KHI TP QUA LẠI)
+createSubLabel("⚡ HỆ THỐNG TELEPORT", currentY)
+currentY = currentY + 20
 
-trackerBtn.MouseButton1Click:Connect(function()
-    trackerEnabled = not trackerEnabled
-    toggleTracker(trackerEnabled)
-    if trackerEnabled then
-        trackerBtn.Text = "📍 Hiện Vị Trí Player: ON"
-        trackerBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 90)
-    else
-        trackerBtn.Text = "📍 Hiện Vị Trí Player: OFF"
-        trackerBtn.BackgroundColor3 = Color3.fromRGB(255, 70, 70)
+local oldPosition = nil
+local isTeleported = false -- Cờ kiểm tra xem đang ở trạng thái đã TP hay chưa
+
+local function executeTeleport(targetCFrame)
+    local character = localPlayer.Character
+    local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+    if rootPart then
+        -- Nếu chưa TP lần nào, lưu lại vị trí gốc hiện tại
+        if not isTeleported then
+            oldPosition = rootPart.CFrame
+            isTeleported = true
+        end
+        
+        rootPart.Anchored = true
+        rootPart.CFrame = targetCFrame
+        task.wait(0.3)
+        rootPart.Anchored = false
+    end
+end
+
+if isTargetGame then
+    createSubLabel("🔥 SUPER MEGA VIP", currentY)
+    local smv1 = createButton("SMV1", "1. (-95, 17633, 9039)", currentY + 20, Color3.fromRGB(0, 150, 230))
+    local smv2 = createButton("SMV2", "2. (-124, 17633, 9043)", currentY + 48, Color3.fromRGB(0, 150, 230))
+    local smv3 = createButton("SMV3", "3. (-82, 17633, 9044)", currentY + 76, Color3.fromRGB(0, 150, 230))
+    currentY = currentY + 108
+
+    createSubLabel("💎 VIP", currentY)
+    local vip1 = createButton("VIP1", "1. (-94, 17633, 9357)", currentY + 20, Color3.fromRGB(0, 180, 90))
+    currentY = currentY + 52
+
+    createSubLabel("⭐ MEGA VIP", currentY)
+    local mv1 = createButton("MV1", "1. (-88, 17633, 9224)", currentY + 20, Color3.fromRGB(150, 0, 230))
+    local mv2 = createButton("MV2", "2. (-112, 17633, 9224)", currentY + 48, Color3.fromRGB(150, 0, 230))
+    currentY = currentY + 80
+
+    smv1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-95, 17633, 9039)) end)
+    smv2.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-124, 17633, 9043)) end)
+    smv3.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-82, 17633, 9044)) end)
+    vip1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-94, 17633, 9357)) end)
+    mv1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-88, 17633, 9224)) end)
+    mv2.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-112, 17633, 9224)) end)
+end
+
+local backBtn = createButton("Back", "🔄 Quay lại vị trí cũ", currentY, Color3.fromRGB(230, 70, 70))
+currentY = currentY + 32
+
+backBtn.MouseButton1Click:Connect(function()
+    if oldPosition then
+        local character = localPlayer.Character
+        local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+        if rootPart then
+            rootPart.Anchored = true
+            rootPart.CFrame = oldPosition
+            task.wait(0.2)
+            rootPart.Anchored = false
+            -- Reset lại trạng thái để lần TP sau tiếp tục lưu đúng điểm xuất phát mới
+            oldPosition = nil
+            isTeleported = false
+        end
     end
 end)
 
@@ -343,7 +318,7 @@ copyBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 4. TELEPORT & ADMIN
+-- 4. ADMIN SCRIPT
 createSubLabel("🛠️ SCRIPT KHÁC", currentY)
 local adminBtn = createButton("Admin", "👑 Nameless Admin", currentY + 20, Color3.fromRGB(255, 140, 0))
 currentY = currentY + 52
@@ -421,4 +396,4 @@ minBtn.MouseButton1Click:Connect(function()
     minBtn.Text = isOpen and "+" or "-"
 end)
 
-print("🎉 Khởi chạy thành công tp.lua hoàn chỉnh!")
+print("🎉 Khởi chạy thành công tp.lua bản chuẩn không ghi đè vị trí!")
