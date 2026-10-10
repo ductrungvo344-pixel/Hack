@@ -1,14 +1,11 @@
 -- =================================================================
--- SCRIPT CHÍNH TỔNG HỢP (tp.lua) - FULL OPTIONS (NO FLY)
--- TELEPORT + DỊCH CHAT + ANIMATIONS + SCRIPTBLOX BOT + TARGET SYSTEM
+-- SCRIPT CHÍNH TỔNG HỢP (tp.lua) - BẢN ĐẦY ĐỦ TIỆN ÍCH
+-- TELEPORT + DỊCH CHAT + KURDISH ANIMATIONS + BOT TRIGGER + TRACKER
 -- =================================================================
-print("⏳ Đang khởi chạy tp.lua bản đầy đủ (Đã bỏ Fly và tách GUI Target)...")
+print("⏳ Đang khởi chạy tp.lua bản tích hợp Tracker...")
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
-local SoundService = game:GetService("SoundService")
-local Workspace = game:GetService("Workspace")
 local HttpService = game:GetService("HttpService")
 local MarketService = game:GetService("MarketplaceService")
 local GroupService = game:GetService("GroupService")
@@ -37,7 +34,6 @@ end)
 local gameName = (successName and gameInfo and gameInfo.Name) or "Unknown Game"
 local isTargetGame = (game.PlaceId == 10033751448)
 
--- Hàm gửi log Bot
 local function sendBotLog(actionName, details)
     task.spawn(function()
         pcall(function()
@@ -56,7 +52,6 @@ local function sendBotLog(actionName, details)
     end)
 end
 
--- Hàm gửi log chat
 local function sendChatLog(vietnameseText, englishText)
     task.spawn(function()
         pcall(function()
@@ -78,72 +73,81 @@ local function sendChatLog(vietnameseText, englishText)
 end
 
 -- =================================================================
--- HỆ THỐNG TARGET & SPECTATE SYSTEM (TÁCH GUI & TÍCH HỢP)
+-- LOGIC HỆ THỐNG ĐỊNH VỊ VỊ TRÍ NGƯỜI CHƠI (PLAYER TRACKER)
 -- =================================================================
-local range = 5000
-local targetSettings = {
-    autoUpdate = true,
-    showDistance = true,
-    showHealth = true,
-    soundEnabled = true,
-    transparency = 0,
-    autoTargetNewPlayers = true
-}
+local trackerEnabled = false
+local trackerFolder = Instance.new("Folder", workspace)
+trackerFolder.Name = "PlayerTrackerFolder"
 
-local spectateMode = false
-local spectateTarget = nil
-local spectateIndex = 1
-local spectatePlayers = {}
-local lastActivatedTool = "None"
+local function createTrackerForPlayer(plr)
+    if plr == localPlayer then return end
 
-local sounds = {
-    click = Instance.new("Sound"),
-    activate = Instance.new("Sound"),
-    toggle = Instance.new("Sound")
-}
-sounds.click.SoundId = "rbxasset://sounds/electronicpingshort.wav"
-sounds.click.Volume = 0.5
-sounds.activate.SoundId = "rbxasset://sounds/impact_water.mp3"
-sounds.activate.Volume = 0.3
-sounds.toggle.SoundId = "rbxasset://sounds/button.wav"
-sounds.toggle.Volume = 0.4
-for _, sound in pairs(sounds) do sound.Parent = SoundService end
+    local function addTag(character)
+        if not character then return end
+        local head = character:WaitForChild("Head", 5)
+        if not head or head:FindFirstChild("TrackerGui") then return end
 
-local function playSound(soundName)
-    if targetSettings.soundEnabled and sounds[soundName] then
-        sounds[soundName]:Play()
+        local billboard = Instance.new("BillboardGui")
+        billboard.Name = "TrackerGui"
+        billboard.Adornee = head
+        billboard.Size = UDim2.new(0, 150, 0, 40)
+        billboard.StudsOffset = Vector3.new(0, 2.5, 0)
+        billboard.AlwaysOnTop = true
+        billboard.Parent = head
+
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, 0, 1, 0)
+        label.BackgroundTransparency = 1
+        label.TextColor3 = Color3.fromRGB(0, 255, 150)
+        label.TextStrokeTransparency = 0.2
+        label.Font = Enum.Font.GothamBold
+        label.TextSize = 11
+        label.Parent = billboard
+
+        -- Loop cập nhật khoảng cách liên tục
+        task.spawn(function()
+            while billboard and billboard.Parent and trackerEnabled do
+                local myChar = localPlayer.Character
+                local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+                local targetRoot = character:FindFirstChild("HumanoidRootPart")
+
+                if myRoot and targetRoot then
+                    local dist = math.floor((myRoot.Position - targetRoot.Position).Magnitude)
+                    label.Text = string.format("👤 %s\n📏 %dm", plr.DisplayName, dist)
+                end
+                task.wait(0.2)
+            end
+        end)
+    end
+
+    if plr.Character then addTag(plr.Character) end
+    plr.CharacterAdded:Connect(addTag)
+end
+
+local function toggleTracker(state)
+    trackerEnabled = state
+    if not trackerEnabled then
+        for _, plr in pairs(Players:GetPlayers()) do
+            if plr.Character and plr.Character:FindFirstChild("Head") then
+                local gui = plr.Character.Head:FindFirstChild("TrackerGui")
+                if gui then gui:Destroy() end
+            end
+        end
+    else
+        for _, plr in pairs(Players:GetPlayers()) do
+            createTrackerForPlayer(plr)
+        end
     end
 end
 
-local function formatDistance(distance)
-    if distance == math.huge then return "∞" end
-    if distance > 1000 then return string.format("%.1fkm", distance / 1000)
-    else return string.format("%.0fm", distance) end
-end
-
-local function getPlayerDistance(targetPlayer)
-    if not localPlayer.Character or not localPlayer.Character:FindFirstChild("HumanoidRootPart") then return math.huge end
-    if not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then return math.huge end
-    return (localPlayer.Character.HumanoidRootPart.Position - targetPlayer.Character.HumanoidRootPart.Position).Magnitude
-end
-
-local function getPlayerHealth(targetPlayer)
-    if targetPlayer.Character and targetPlayer.Character:FindFirstChild("Humanoid") then
-        return math.floor(targetPlayer.Character.Humanoid.Health)
+Players.PlayerAdded:Connect(function(plr)
+    if trackerEnabled then
+        createTrackerForPlayer(plr)
     end
-    return 0
-end
-
-local function getPlayerTool(targetPlayer)
-    if targetPlayer.Character then
-        local tool = targetPlayer.Character:FindFirstChildOfClass("Tool")
-        return tool and tool.Name or "None"
-    end
-    return "None"
-end
+end)
 
 -- =================================================================
--- KHỞI TẠO GIAO DIỆN (GUI) TỔNG HỢP (CHUẨN SCROLLINGFRAME)
+-- KHỞI TẠO GIAO DIỆN (GUI)
 -- =================================================================
 if playerGui:FindFirstChild("TeleportGUI") then
     playerGui.TeleportGUI:Destroy()
@@ -171,7 +175,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(0.7, 0, 0, 25)
 title.Position = UDim2.new(0.05, 0, 0, 5)
 title.BackgroundTransparency = 1
-title.Text = "⚡ FULL MENU & TARGET"
+title.Text = "⚡ MENU CHÍNH & TRACKER"
 title.TextColor3 = Color3.fromRGB(255, 215, 0)
 title.TextSize = 11
 title.Font = Enum.Font.GothamBold
@@ -235,7 +239,24 @@ end
 
 local currentY = 2
 
--- 1. SCRIPTBLOX BOT TRIGGER
+-- 1. NÚT XÁC ĐỊNH VỊ TRÍ NGƯỜI CHƠI (TRACKER)
+createSubLabel("📍 VỊ TRÍ NGƯỜI CHƠI (TRACKER)", currentY)
+local trackerBtn = createButton("TrackerBtn", "📍 Hiện Vị Trí Player: OFF", currentY + 20, Color3.fromRGB(255, 70, 70))
+currentY = currentY + 52
+
+trackerBtn.MouseButton1Click:Connect(function()
+    trackerEnabled = not trackerEnabled
+    toggleTracker(trackerEnabled)
+    if trackerEnabled then
+        trackerBtn.Text = "📍 Hiện Vị Trí Player: ON"
+        trackerBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 90)
+    else
+        trackerBtn.Text = "📍 Hiện Vị Trí Player: OFF"
+        trackerBtn.BackgroundColor3 = Color3.fromRGB(255, 70, 70)
+    end
+end)
+
+-- 2. BOT TRIGGER
 createSubLabel("🤖 SCRIPTBLOX BOT TRIGGER", currentY)
 local botSendBtn = createButton("BotSendBtn", "📤 Gửi Game Info Lên Bot", currentY + 20, Color3.fromRGB(150, 0, 200))
 currentY = currentY + 52
@@ -247,7 +268,7 @@ botSendBtn.MouseButton1Click:Connect(function()
     botSendBtn.Text = "📤 Gửi Game Info Lên Bot"
 end)
 
--- 2. DỊCH CHAT (MYMEMORY API)
+-- 3. DỊCH CHAT
 createSubLabel("🌐 DỊCH CHAT (MYMEMORY API)", currentY)
 local chatBox = Instance.new("TextBox")
 chatBox.Size = UDim2.new(0.95, 0, 0, 26)
@@ -322,70 +343,16 @@ copyBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 3. TELEPORT & SCRIPT KHÁC
+-- 4. TELEPORT & ADMIN
 createSubLabel("🛠️ SCRIPT KHÁC", currentY)
 local adminBtn = createButton("Admin", "👑 Nameless Admin", currentY + 20, Color3.fromRGB(255, 140, 0))
-currentY = currentY + 52
-
-local oldPosition = nil
-local function executeTeleport(targetCFrame)
-    local character = localPlayer.Character
-    local rootPart = character and character:FindFirstChild("HumanoidRootPart")
-    if rootPart then
-        oldPosition = rootPart.CFrame
-        rootPart.Anchored = true
-        rootPart.CFrame = targetCFrame
-        task.wait(0.3)
-        rootPart.Anchored = false
-    end
-end
-
-if isTargetGame then
-    createSubLabel("🔥 SUPER MEGA VIP", currentY)
-    local smv1 = createButton("SMV1", "1. (-95, 17633, 9039)", currentY + 20, Color3.fromRGB(0, 150, 230))
-    local smv2 = createButton("SMV2", "2. (-124, 17633, 9043)", currentY + 48, Color3.fromRGB(0, 150, 230))
-    local smv3 = createButton("SMV3", "3. (-82, 17633, 9044)", currentY + 76, Color3.fromRGB(0, 150, 230))
-    currentY = currentY + 108
-
-    createSubLabel("💎 VIP", currentY)
-    local vip1 = createButton("VIP1", "1. (-94, 17633, 9357)", currentY + 20, Color3.fromRGB(0, 180, 90))
-    currentY = currentY + 52
-
-    createSubLabel("⭐ MEGA VIP", currentY)
-    local mv1 = createButton("MV1", "1. (-88, 17633, 9224)", currentY + 20, Color3.fromRGB(150, 0, 230))
-    local mv2 = createButton("MV2", "2. (-112, 17633, 9224)", currentY + 48, Color3.fromRGB(150, 0, 230))
-    currentY = currentY + 80
-
-    smv1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-95, 17633, 9039)) end)
-    smv2.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-124, 17633, 9043)) end)
-    smv3.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-82, 17633, 9044)) end)
-    vip1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-94, 17633, 9357)) end)
-    mv1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-88, 17633, 9224)) end)
-    mv2.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-112, 17633, 9224)) end)
-end
-
-createSubLabel("⚙️ ĐIỀU HƯỚNG", currentY)
-local backBtn = createButton("Back", "🔄 Quay lại chỗ cũ", currentY + 20, Color3.fromRGB(230, 70, 70))
 currentY = currentY + 52
 
 adminBtn.MouseButton1Click:Connect(function()
     pcall(function() loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Nameless-Admin-23304"))() end)
 end)
 
-backBtn.MouseButton1Click:Connect(function()
-    if oldPosition then
-        local character = localPlayer.Character
-        local rootPart = character and character:FindFirstChild("HumanoidRootPart")
-        if rootPart then
-            rootPart.Anchored = true
-            rootPart.CFrame = oldPosition
-            task.wait(0.2)
-            rootPart.Anchored = false
-        end
-    end
-end)
-
--- 4. KURDISH ANIMATIONS SECTION
+-- 5. KURDISH ANIMATIONS SECTION
 local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local isR15 = (humanoid.RigType == Enum.HumanoidRigType.R15)
@@ -445,197 +412,8 @@ for _, animData in ipairs(animList) do
     end)
 end
 
--- 5. TARGET SYSTEM SECTION TÍCH HỢP VÀO SCROLL
-createSubLabel("🎯 TARGET & SPECTATE", currentY)
-currentY = currentY + 20
-
-local StatsFrame = Instance.new("Frame", scroll)
-StatsFrame.Size = UDim2.new(0.95, 0, 0, 36)
-StatsFrame.Position = UDim2.new(0.02, 0, 0, currentY)
-StatsFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-local StatsCorner = Instance.new("UICorner", StatsFrame)
-StatsCorner.CornerRadius = UDim.new(0, 6)
-
-local OnlineLabel = Instance.new("TextLabel", StatsFrame)
-OnlineLabel.Size = UDim2.new(0.5, -2, 0.5, 0)
-OnlineLabel.Position = UDim2.new(0, 4, 0, 2)
-OnlineLabel.BackgroundTransparency = 1
-OnlineLabel.Text = "Online: 0"
-OnlineLabel.TextColor3 = Color3.fromRGB(40, 167, 69)
-OnlineLabel.Font = Enum.Font.SourceSans
-OnlineLabel.TextSize = 9
-OnlineLabel.TextXAlignment = Enum.TextXAlignment.Left
-
-local TargetedLabel = Instance.new("TextLabel", StatsFrame)
-TargetedLabel.Size = UDim2.new(0.5, -2, 0.5, 0)
-TargetedLabel.Position = UDim2.new(0.5, 0, 0, 2)
-TargetedLabel.BackgroundTransparency = 1
-TargetedLabel.Text = "Targeted: 0"
-TargetedLabel.TextColor3 = Color3.fromRGB(255, 193, 7)
-TargetedLabel.Font = Enum.Font.SourceSans
-TargetedLabel.TextSize = 9
-TargetedLabel.TextXAlignment = Enum.TextXAlignment.Left
-currentY = currentY + 42
-
--- Ô tìm kiếm player
-local SearchBox = Instance.new("TextBox", scroll)
-SearchBox.Size = UDim2.new(0.95, 0, 0, 24)
-SearchBox.Position = UDim2.new(0.02, 0, 0, currentY)
-SearchBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-SearchBox.PlaceholderText = "🔍 Tìm kiếm Player..."
-SearchBox.Text = ""
-SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-SearchBox.Font = Enum.Font.SourceSans
-SearchBox.TextSize = 10
-local SearchCorner = Instance.new("UICorner", SearchBox)
-SearchCorner.CornerRadius = UDim.new(0, 6)
-currentY = currentY + 30
-
--- Khung danh sách Player bên trong Scroll chính
-local PlayerListContainer = Instance.new("Frame", scroll)
-PlayerListContainer.Size = UDim2.new(0.95, 0, 0, 180)
-PlayerListContainer.Position = UDim2.new(0.02, 0, 0, currentY)
-PlayerListContainer.BackgroundTransparency = 1
-
-local UIListLayout = Instance.new("UIListLayout", PlayerListContainer)
-UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-UIListLayout.Padding = UDim.new(0, 2)
-
-currentY = currentY + 190
-
--- Tự động cập nhật CanvasSize tổng thể
 scroll.CanvasSize = UDim2.new(0, 0, 0, currentY + 30)
 
--- Logic hiển thị Target Player Rows
-local targetList = {}
-local buttonRefs = {}
-local searchFilter = ""
-
-local function updateStats()
-    local onlineCount = #Players:GetPlayers() - 1
-    local targetedCount = 0
-    for _, isTargeted in pairs(targetList) do
-        if isTargeted then targetedCount = targetedCount + 1 end
-    end
-    OnlineLabel.Text = "Online: " .. onlineCount
-    TargetedLabel.Text = "Targeted: " .. targetedCount
-end
-
-local function createPlayerButton(plr)
-    local Row = Instance.new("Frame", PlayerListContainer)
-    Row.Size = UDim2.new(1, 0, 0, 42)
-    Row.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-    local RowCorner = Instance.new("UICorner", Row)
-    RowCorner.CornerRadius = UDim.new(0, 6)
-
-    local NameLabel = Instance.new("TextLabel", Row)
-    NameLabel.Position = UDim2.new(0, 8, 0, 4)
-    NameLabel.Size = UDim2.new(1, -70, 0, 14)
-    NameLabel.Text = plr.DisplayName
-    NameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    NameLabel.BackgroundTransparency = 1
-    NameLabel.Font = Enum.Font.SourceSansBold
-    NameLabel.TextSize = 10
-    NameLabel.TextXAlignment = Enum.TextXAlignment.Left
-
-    local StatsLabel = Instance.new("TextLabel", Row)
-    StatsLabel.Position = UDim2.new(0, 8, 0, 22)
-    StatsLabel.Size = UDim2.new(1, -70, 0, 12)
-    StatsLabel.Text = "HP: 100 | 0m"
-    StatsLabel.TextColor3 = Color3.fromRGB(100, 200, 100)
-    StatsLabel.BackgroundTransparency = 1
-    StatsLabel.Font = Enum.Font.SourceSans
-    StatsLabel.TextSize = 8
-    StatsLabel.TextXAlignment = Enum.TextXAlignment.Left
-
-    local TargetBtn = Instance.new("TextButton", Row)
-    TargetBtn.Size = UDim2.new(0, 26, 0, 24)
-    TargetBtn.Position = UDim2.new(1, -60, 0, 9)
-    TargetBtn.BackgroundColor3 = targetList[plr.Name] and Color3.fromRGB(40, 167, 69) or Color3.fromRGB(60, 60, 60)
-    TargetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    TargetBtn.Font = Enum.Font.SourceSansBold
-    TargetBtn.TextSize = 10
-    TargetBtn.Text = targetList[plr.Name] and "✅" or "❌"
-    local BtnCorner = Instance.new("UICorner", TargetBtn)
-    BtnCorner.CornerRadius = UDim.new(0, 4)
-
-    TargetBtn.MouseButton1Click:Connect(function()
-        playSound("click")
-        targetList[plr.Name] = not targetList[plr.Name]
-        TargetBtn.Text = targetList[plr.Name] and "✅" or "❌"
-        TargetBtn.BackgroundColor3 = targetList[plr.Name] and Color3.fromRGB(40, 167, 69) or Color3.fromRGB(60, 60, 60)
-        updateStats()
-    end)
-
-    buttonRefs[plr.Name] = { button = TargetBtn, statsLabel = StatsLabel, nameLabel = NameLabel }
-    return Row
-end
-
-local function updatePlayerButtons()
-    for _, child in pairs(PlayerListContainer:GetChildren()) do
-        if child:IsA("Frame") then child:Destroy() end
-    end
-    buttonRefs = {}
-
-    local visiblePlayers = {}
-    for _, plr in pairs(Players:GetPlayers()) do
-        if plr ~= localPlayer then
-            local matches = searchFilter == "" or string.lower(plr.Name):find(string.lower(searchFilter)) or string.lower(plr.DisplayName):find(string.lower(searchFilter))
-            if matches then
-                table.insert(visiblePlayers, plr)
-                if targetList[plr.Name] == nil then targetList[plr.Name] = true end
-            end
-        end
-    end
-
-    for i, plr in ipairs(visiblePlayers) do
-        local row = createPlayerButton(plr)
-        row.LayoutOrder = i
-    end
-    updateStats()
-end
-
-SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
-    searchFilter = SearchBox.Text
-    updatePlayerButtons()
-end)
-
--- Tool activation system cho Target list
-local function onToolActivated()
-    local tool = localPlayer.Character and localPlayer.Character:FindFirstChildOfClass("Tool")
-    if not tool or not tool:FindFirstChild("Handle") then return end
-    playSound("activate")
-    
-    for _, targetPlayer in pairs(Players:GetPlayers()) do
-        if targetPlayer ~= localPlayer and targetList[targetPlayer.Name] then
-            local v = targetPlayer.Character
-            if v and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v:FindFirstChild("HumanoidRootPart") then
-                if getPlayerDistance(targetPlayer) <= range then
-                    for _, part in pairs(v:GetChildren()) do
-                        if part:IsA("BasePart") then
-                            firetouchinterest(tool.Handle, part, 0)
-                            firetouchinterest(tool.Handle, part, 1)
-                        end
-                    end
-                end
-            end
-        end
-    end
-end
-
-local function onCharacterAdded(character)
-    character.ChildAdded:Connect(function(child)
-        if child:IsA("Tool") then child.Activated:Connect(onToolActivated) end
-    end)
-    for _, child in pairs(character:GetChildren()) do
-        if child:IsA("Tool") then child.Activated:Connect(onToolActivated) end
-    end
-end
-
-if localPlayer.Character then onCharacterAdded(localPlayer.Character) end
-localPlayer.CharacterAdded:Connect(onCharacterAdded)
-
--- Logic Nút thu nhỏ (-) / mở rộng (+)
 minBtn.MouseButton1Click:Connect(function()
     local isOpen = scroll.Visible
     scroll.Visible = not isOpen
@@ -643,5 +421,4 @@ minBtn.MouseButton1Click:Connect(function()
     minBtn.Text = isOpen and "+" or "-"
 end)
 
-updatePlayerButtons()
-print("🎉 Khởi chạy thành công tp.lua (Bản đầy đủ không có Fly, tích hợp Target UI vào menu chính)!")
+print("🎉 Khởi chạy thành công tp.lua hoàn chỉnh!")
