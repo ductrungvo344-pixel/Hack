@@ -2,7 +2,7 @@ const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 const axios = require('axios');
 const http = require('http');
 
-// Tạo cổng HTTP gọn nhẹ để Render làm Health Check và cron-job ping chống ngủ đông
+// 1. Tạo cổng HTTP gọn nhẹ để Render làm Health Check và cron-job ping chống ngủ đông
 const PORT = process.env.PORT || 3000;
 const server = http.createServer((req, res) => {
     if (req.url === '/ping' || req.url === '/') {
@@ -19,7 +19,7 @@ server.listen(PORT, () => {
     console.log(`🌐 Cổng HTTP Health Check đang chạy trên port ${PORT}`);
 });
 
-// Khởi động Bot Discord tìm kiếm script
+// 2. Khởi động Bot Discord tìm kiếm script
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -72,7 +72,8 @@ async function fetchRscripts(gameName) {
 }
 
 client.on('messageCreate', async message => {
-    if (message.author.bot) return;
+    // Chỉ bỏ qua bot thường, CHO PHÉP tin nhắn từ Webhook đi qua để nhận trigger
+    if (message.author.bot && !message.webhookId) return;
 
     const isCorrectChannel = TARGET_CHANNEL_ID === "" || message.channel.id === TARGET_CHANNEL_ID;
     const isSearchCommand = message.content.startsWith('!search');
