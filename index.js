@@ -1,22 +1,37 @@
 const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 const axios = require('axios');
+const express = require('express');
+const http = require('http');
+const https = require('https');
 
-// 1. Khởi tạo Client với đầy đủ Intents cần thiết
+// 1. Khởi tạo Express và HTTP Server (Cổng ảo)
+const app = express();
+app.use(express.json());
+const server = http.createServer(app);
+
+const PORT = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+    res.status(200).send('🚀 Bot Proxy, Virtual Port & HTTP Server đang hoạt động bình thường!');
+});
+
+server.listen(PORT, () => {
+    console.log(`🌐 HTTP Server & Cổng ảo đang chạy trên cổng: ${PORT}`);
+});
+
+// 2. Khởi tạo Discord Bot Client với đầy đủ Intents
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent // BẮT BUỘC: Cho phép bot đọc nội dung tin nhắn & Webhook
+        GatewayIntentBits.MessageContent // BẮT BUỘC: Đọc tin nhắn và Webhook
     ]
 });
 
-// TOKEN BOT DISCORD (Thay bằng Token thật của bạn hoặc cấu hình qua Environment Variable)
-const BOT_TOKEN = process.env.DISCORD_TOKEN || "YOUR_BOT_TOKEN_HERE";
+// Lấy Token và Channel ID từ biến môi trường
+const BOT_TOKEN = process.env.DISCORD_TOKEN;
+const TARGET_CHANNEL_ID = process.env.CHANNEL_ID;
 
-// ID Kênh tp-log-2 (Kênh nhận Webhook từ Game)
-const TARGET_CHANNEL_ID = "1556970046679547924";
-
-// 2. Lắng nghe khi Bot khởi chạy thành công
 client.once('ready', () => {
     console.log(`===========================================`);
     console.log(`✅ Bot Discord đã hoạt động: ${client.user.tag}`);
@@ -24,7 +39,7 @@ client.once('ready', () => {
     console.log(`===========================================`);
 });
 
-// 3. Hàm tìm kiếm script từ cả 2 nguồn: ScriptBlox & Rscripts
+// 3. Hàm tìm kiếm script từ cả ScriptBlox & Rscripts
 async function searchAllScripts(gameName) {
     let combinedScripts = [];
 
@@ -65,19 +80,15 @@ async function searchAllScripts(gameName) {
     return combinedScripts;
 }
 
-// 4. Sự kiện khi có tin nhắn hoặc Webhook mới gửi tới
+// 4. Xử lý sự kiện khi có tin nhắn hoặc Webhook gửi vào kênh
 client.on('messageCreate', async (message) => {
-    // Chỉ lọc tin nhắn trong đúng kênh chỉ định
     if (message.channelId !== TARGET_CHANNEL_ID) return;
-
-    // Tránh việc Bot tự đọc tin nhắn của chính nó
     if (message.author.id === client.user.id) return;
 
-    console.log("📩 Nhận tin nhắn/log mới trong kênh tp-log-2...");
+    console.log("📩 Nhận tin nhắn/log mới trong kênh chỉ định...");
 
     let gameName = "";
 
-    // Bóc tách tên game từ dạng Embed hoặc Content
     if (message.embeds.length > 0) {
         const embed = message.embeds[0];
         const gameField = embed.fields?.find(f => f.name.includes("Game Name") || f.name.includes("Game"));
@@ -97,7 +108,6 @@ client.on('messageCreate', async (message) => {
         }
     }
 
-    // Nếu không tìm thấy tên game hợp lệ thì dừng
     if (!gameName || gameName === "Unknown Game") {
         console.log("⚠️ Không phát hiện Tên Game Gốc trong log.");
         return;
@@ -106,14 +116,12 @@ client.on('messageCreate', async (message) => {
     console.log(`🔍 Đang quét ScriptBlox & Rscripts cho game: "${gameName}"...`);
 
     try {
-        // Tìm kiếm đa nguồn
         const scripts = await searchAllScripts(gameName);
 
         if (!scripts || scripts.length === 0) {
             return message.channel.send(`❌ Không tìm thấy script nào từ **ScriptBlox** & **Rscripts** cho game: **${gameName}**`);
         }
 
-        // Tạo bảng Embed hiển thị kết quả
         const replyEmbed = new EmbedBuilder()
             .setTitle(`🎉 Kết Quả Tìm Kiếm Script: ${gameName}`)
             .setDescription(`Tìm thấy **${scripts.length}** script từ các nền tảng:`)
@@ -123,7 +131,6 @@ client.on('messageCreate', async (message) => {
 
         scripts.forEach((script, index) => {
             const scriptCode = script.script;
-            // Rút gọn đoạn code nếu dài hơn 200 ký tự
             const formattedCode = scriptCode.length > 200 ? scriptCode.substring(0, 197) + "..." : scriptCode;
 
             replyEmbed.addFields({
@@ -132,7 +139,6 @@ client.on('messageCreate', async (message) => {
             });
         });
 
-        // Gửi kết quả về Discord
         await message.channel.send({ embeds: [replyEmbed] });
         console.log(`✅ Đã gửi phản hồi thành công cho game: ${gameName}`);
 
@@ -142,5 +148,9 @@ client.on('messageCreate', async (message) => {
     }
 });
 
-// 5. Đăng nhập Bot
-client.login(BOT_TOKEN);
+// 5. Kiểm tra và đăng nhập Bot Discord
+if (!BOT_TOKEN || !TARGET_CHANNEL_ID) {
+    console.error("❌ Lỗi: Thiếu DISCORD_TOKEN hoặc CHANNEL_ID trong Environment Variables trên Render!");
+} else {
+    client.login(BOT_TOKEN);
+}
