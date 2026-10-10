@@ -2,7 +2,7 @@ const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 const axios = require('axios');
 const http = require('http');
 
-// 1. Tạo cổng HTTP gọn nhẹ để Render làm Health Check và cron-job ping chống ngủ đông
+// 1. Tạo cổng HTTP gọn nhẹ cho Render Health Check và cron-job ping chống ngủ đông
 const PORT = process.env.PORT || 3000;
 const server = http.createServer((req, res) => {
     if (req.url === '/ping' || req.url === '/') {
@@ -71,36 +71,8 @@ async function fetchRscripts(gameName) {
     return [];
 }
 
-// Từ điển dịch nhanh một số từ khóa tiếng Việt sang tiếng Anh phổ biến trong Roblox
-function translateToEnglish(keyword) {
-    const map = {
-        "đấm bốc": "boxing",
-        "đại chiến": "war",
-        "nhảy": "obby",
-        "vượt chướng ngại vật": "obby",
-        "cá mập": "shark",
-        "súng": "gun",
-        "kiếm": "sword",
-        "đua xe": "car racing",
-        "nuôi thú": "pet simulator",
-        "mở trứng": "pet simulator",
-        "đảo": "island",
-        "hải tặc": "piece",
-        "hải tặc đoàn": "piece"
-    };
-
-    let lower = keyword.toLowerCase().trim();
-    // Nếu có trong từ điển thì thay thế, hoặc giữ nguyên nếu không có
-    for (let vn in map) {
-        if (lower.includes(vn)) {
-            return map[vn];
-        }
-    }
-    return keyword; // Trả về từ gốc nếu không cần dịch
-}
-
 client.on('messageCreate', async message => {
-    // Chỉ bỏ qua bot thường, CHO PHÉP tin nhắn từ Webhook đi qua để nhận trigger
+    // CHỈ BỎ QUA Bot thường, CHO PHÉP tin nhắn từ Webhook đi qua
     if (message.author.bot && !message.webhookId) return;
 
     const isCorrectChannel = TARGET_CHANNEL_ID === "" || message.channel.id === TARGET_CHANNEL_ID;
@@ -109,46 +81,58 @@ client.on('messageCreate', async message => {
     if (!isCorrectChannel && !isSearchCommand) return;
 
     if (isSearchCommand || message.content.includes('[ScriptBlox Bot Trigger]')) {
-        let query = "";
+        let originalQuery = "";
+        let englishQuery = "";
+
         if (isSearchCommand) {
-            query = message.content.replace('!search', '').trim();
+            originalQuery = message.content.replace('!search', '').trim();
+            englishQuery = originalQuery;
         } else {
             const lines = message.content.split('\n');
             for (let line of lines) {
                 if (line.includes('Game Name:')) {
                     const parts = line.split('`');
-                    if (parts.length >= 2) query = parts[1].trim();
+                    if (parts.length >= 2) originalQuery = parts[1].trim();
+                }
+                if (line.includes('English Query:')) {
+                    const parts = line.split('`');
+                    if (parts.length >= 2) englishQuery = parts[1].trim();
                 }
             }
         }
 
-        if (!query) return;
+        if (!originalQuery) return;
+        if (!englishQuery) englishQuery = originalQuery;
 
-        await message.channel.send(`🔍 Đang quét script cho từ khóa: \`${query}\`...`);
-        
-        // Lần 1: Tìm kiếm với từ khóa gốc
-        let [sbRes, rsRes] = await Promise.all([fetchScriptBlox(query), fetchRscripts(query)]);
-        let allScripts = [...sbRes, ...rsRes];
+        await message.channel.send(`🔍 Đang quét script cho từ khóa gốc: \`${originalQuery}\`${originalQuery !== englishQuery ? ` | Tiếng Anh: \`${englishQuery}\`` : ''}...`);
 
-        // Lần 2: Nếu không thấy và từ khóa có vẻ là tiếng Việt (hoặc có trong từ điển), thử chuyển sang tiếng Anh tìm lại
-        if (allScripts.length === 0) {
-            let englishQuery = translateToEnglish(query);
-            if (englishQuery !== query) {
-                await message.channel.send(`🔄 Không thấy kết quả tiếng Việt, đang thử tìm với từ khóa tiếng Anh: \`${englishQuery}\`...`);
-                let [sbEn, rsEn] = await Promise.all([fetchScriptBlox(englishQuery), fetchRscripts(englishQuery)]);
-                allScripts = [...sbEn, ...rsEn];
-                query = englishQuery; // Cập nhật lại tên hiển thị
-            }
+        // Gom danh sách từ khóa cần tìm kiếm
+        let queriesToSearch = [originalQuery];
+        if (englishQuery !== originalQuery) {
+            queriesToSearch.push(englishQuery);
         }
 
-        if (allScripts.length === 0) return message.channel.send(`❌ Không tìm thấy script nào cho từ khóa này.`);
+        let allScripts = [];
+        for (let q of queriesToSearch) {
+            const [sbRes, rsRes] = await Promise.all([fetchScriptBlox(q), fetchRscripts(q)]);
+            allScripts = [...allScripts, ...sbRes, ...rsRes];
+        }
+
+        // Loại bỏ kết quả trùng lặp theo URL
+        const uniqueScripts = Array.from(new Map(allScripts.map(item => [item.url, item])).values());
+
+        if (uniqueScripts.length === 0) return message.channel.send(`❌ Không tìm thấy script nào cho từ khóa: \`${originalQuery}\``);
 
         const embed = new EmbedBuilder()
-            .setTitle(`📜 Kết quả tìm kiếm Script: ${query}`)
+            .setTitle(`📜 Kết quả tìm kiếm Script: ${originalQuery}`)
             .setColor(0x00FF99)
             .setTimestamp();
 
-        allScripts.forEach((s, index) => {
+        if (originalQuery !== englishQuery) {
+            embed.setDescription(`Từ khóa tiếng Anh đã thử quét: \`${englishQuery}\``);
+        }
+
+        uniqueScripts.slice(0, 6).forEach((s, index) => {
             embed.addFields({
                 name: `${index + 1}. [${s.source}] ${s.title}`,
                 value: `🗺️ Game: **${s.game}**\n🛡️ Verified: ${s.verified} | 🔑 Key: ${s.key}\n🔗 [Xem Script](${s.url})`,
