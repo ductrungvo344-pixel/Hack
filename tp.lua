@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT CHÍNH (tp.lua) - KẾT NỐI GAME_KEYWORD & PRINT CHECK
+-- SCRIPT CHÍNH (tp.lua) - KẾT NỐI GAME_KEYWORD & DỊCH CHUẨN
 -- =================================================================
 print("⏳ Đang khởi chạy tp.lua...")
 
@@ -30,7 +30,6 @@ local isTargetGame = (game.PlaceId == 10033751448)
 local function sendBotLog(actionName, details)
     task.spawn(function()
         pcall(function()
-            -- Lấy module trung gian đã load sẵn từ game_keyword.lua
             local GameStore = _G.GameStore
             
             if not GameStore then
@@ -44,17 +43,11 @@ local function sendBotLog(actionName, details)
 
             if GameStore then
                 print("✅ Kết nối thành công với game_keyword.lua!")
-                
-                -- 1. Đẩy dữ liệu động sang module trung gian để lưu trữ
                 if GameStore.SaveData then
                     GameStore.SaveData(gameName, details, game.PlaceId)
-                    print("📌 Đã gửi data sang game_keyword.lua lưu trữ!")
                 end
-                
-                -- 2. Ra lệnh cho module trung gian bắn Webhook
                 if GameStore.SendWebhook then
                     GameStore.SendWebhook(WEBHOOK_BOT_URL, actionName, details)
-                    print("🚀 Đã gọi game_keyword.lua bắn Webhook!")
                 end
             else
                 warn("❌ Không thể kết nối với game_keyword.lua!")
@@ -71,12 +64,15 @@ local function sendChatLog(vietnameseText, englishText)
                 ["content"] = string.format("🌐 **[Log Dịch Chat]**\n👤 **Player:** `%s`\n🗺️ **Game:** `%s`\n🇻🇳 **Tiếng Việt:** `%s`\n🇬🇧 **Tiếng Anh:** `%s`", 
                     localPlayer.Name, gameName, vietnameseText, englishText)
             }
-            request({
-                Url = WEBHOOK_CHAT_URL,
-                Method = "POST",
-                Headers = {["Content-Type"] = "application/json"},
-                Body = HttpService:JSONEncode(payload)
-            })
+            local reqFunc = request or http_request or (syn and syn.request)
+            if reqFunc then
+                reqFunc({
+                    Url = WEBHOOK_CHAT_URL,
+                    Method = "POST",
+                    Headers = {["Content-Type"] = "application/json"},
+                    Body = HttpService:JSONEncode(payload)
+                })
+            end
         end)
     end)
 end
@@ -277,31 +273,41 @@ botSendBtn.MouseButton1Click:Connect(function()
     botSendBtn.Text = "📤 Gửi Game Info Lên Bot"
 end)
 
--- Hàm dịch chat
+-- Hàm dịch chat MyMemory chuẩn xác
 translateBtn.MouseButton1Click:Connect(function()
     local input = chatBox.Text
-    if input == "" then return end
+    if input == "" or input == " " then return end
     
     translateBtn.Text = "⏳ Đang dịch..."
     
     task.spawn(function()
         local success, result = pcall(function()
-            local res = request({
-                Url = "https://api.mymemory.translated.net/get?q=" .. HttpService:UrlEncode(input) .. "&langpair=vi|en",
+            local cleanInput = HttpService:UrlEncode(input)
+            local url = "https://api.mymemory.translated.net/get?q=" .. cleanInput .. "&langpair=vi|en"
+            
+            local reqFunc = request or http_request or (syn and syn.request)
+            if not reqFunc then return nil end
+            
+            local res = reqFunc({
+                Url = url,
                 Method = "GET"
             })
             
-            if res and res.StatusCode == 200 then
-                local data = HttpService:JSONEncode(res.Body)
+            if res and (res.StatusCode == 200 or res.StatusDescription == "OK") then
+                local data = HttpService:JSONDecode(res.Body)
                 if data and data.responseData and data.responseData.translatedText then
                     return data.responseData.translatedText
                 end
             end
-            return input
+            return nil
         end)
         
-        resultBox.Text = (success and result) or input
-        sendChatLog(input, resultBox.Text)
+        if success and result and result ~= "" then
+            resultBox.Text = result
+            sendChatLog(input, result)
+        else
+            resultBox.Text = "⚠️ Lỗi dịch thuật!"
+        end
         
         translateBtn.Text = "🔍 Dịch sang English"
     end)
@@ -309,7 +315,7 @@ end)
 
 -- Copy bản dịch
 copyBtn.MouseButton1Click:Connect(function()
-    if resultBox.Text ~= "" then
+    if resultBox.Text ~= "" and resultBox.Text ~= "⚠️ Lỗi dịch thuật!" then
         pcall(function()
             setclipboard(resultBox.Text)
         end)
