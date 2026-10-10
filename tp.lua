@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT ALL-IN-ONE (TỰ ĐỘNG GỬI TỪ KHÓA GỐC & TỪ KHÓA TIẾNG ANH)
+-- SCRIPT CHÍNH (tp.lua) - TÍCH HỢP MODULE LƯU TRỮ TRUNG GIAN
 -- =================================================================
 local Players = game:GetService("Players")
 local localPlayer = Players.LocalPlayer
@@ -21,39 +21,30 @@ local successName, gameInfo = pcall(function()
 end)
 local gameName = (successName and gameInfo and gameInfo.Name) or "Unknown Game"
 
--- Hàm chuyển đổi nhanh từ khóa tiếng Việt sang tiếng Anh
-local function getEnglishKeyword(name)
-    local lowerName = string.lower(name)
-    if string.find(lowerName, "đấm bốc") then return "boxing"
-    elseif string.find(lowerName, "hải tặc") then return "piece"
-    elseif string.find(lowerName, "đua xe") then return "car racing"
-    elseif string.find(lowerName, "nuôi thú") then return "pet simulator"
-    elseif string.find(lowerName, "vượt chướng ngại vật") or string.find(lowerName, "nhảy") then return "obby"
-    elseif string.find(lowerName, "cá mập") then return "shark"
-    elseif string.find(lowerName, "súng") then return "gun"
-    elseif string.find(lowerName, "kiếm") then return "sword"
-    end
-    return name
-end
-
 -- Kiểm tra PlaceId chỉ định (10033751448)
 local isTargetGame = (game.PlaceId == 10033751448)
 
--- Hàm gửi thông tin cho Bot ScriptBlox (Gửi cả từ khóa gốc và từ khóa tiếng Anh)
+-- Hàm gửi thông tin cho Bot ScriptBlox (Truyền data động sang file game_keyword.lua)
 local function sendBotLog(actionName, details)
     task.spawn(function()
         pcall(function()
-            local englishName = getEnglishKeyword(gameName)
-            local payload = {
-                ["content"] = string.format("[ScriptBlox Bot Trigger]\n🗺️ **Game Name:** `%s`\n🇬🇧 **English Query:** `%s`\n🆔 **PlaceId:** `%d`\n📌 **Hành động:** `%s`\n💬 **Data:** `%s`", 
-                    gameName, englishName, game.PlaceId, actionName, details)
-            }
-            request({
-                Url = WEBHOOK_BOT_URL,
-                Method = "POST",
-                Headers = {["Content-Type"] = "application/json"},
-                Body = HttpService:JSONEncode(payload)
-            })
+            -- Lấy module lưu trữ trung gian đã được loader.lua tải sẵn vào _G.GameStore
+            local GameStore = _G.GameStore
+            if not GameStore then
+                -- Backup gọi trực tiếp nếu chạy file độc lập không qua loader
+                local keywordUrl = "https://raw.githubusercontent.com/ductrungvo344-pixel/Hack/refs/heads/main/game_keyword.lua"
+                local success, res = pcall(function()
+                    return loadstring(game:HttpGet(keywordUrl))()
+                end)
+                if success then GameStore = res end
+            end
+            
+            if GameStore and GameStore.SaveData and GameStore.SendWebhook then
+                -- 1. Gửi dữ liệu động sang module trung gian để lưu trữ
+                GameStore.SaveData(gameName, details, game.PlaceId)
+                -- 2. Ra lệnh cho module trung gian xử lý bắn Webhook
+                GameStore.SendWebhook(WEBHOOK_BOT_URL, actionName, details)
+            end
         end)
     end)
 end
@@ -128,7 +119,7 @@ local minCorner = Instance.new("UICorner")
 minCorner.CornerRadius = UDim.new(0, 4)
 minCorner.Parent = minBtn
 
--- ScrollingFrame chứa các tính năng cuộn
+-- ScrollingFrame chứa các tính năng cuộn mượt mà
 local scroll = Instance.new("ScrollingFrame")
 scroll.Size = UDim2.new(0.95, 0, 0, 335)
 scroll.Position = UDim2.new(0.025, 0, 0, 35)
@@ -220,7 +211,7 @@ resCorner.Parent = resultBox
 
 local copyBtn = createButton("CopyBtn", "📋 Copy Bản Dịch", 172, Color3.fromRGB(0, 180, 90))
 
--- --- SẮP XẾP CÁC NÚT KHÁC ---
+-- --- SẮP XẾP CÁC NÚT KHÁC (ẨN HIỆN THEO PLACEID) ---
 local adminLbl = createSubLabel("🛠️ SCRIPT KHÁC", 210)
 local adminBtn = createButton("Admin", "👑 Nameless Admin", 230, Color3.fromRGB(255, 140, 0))
 
@@ -342,7 +333,7 @@ smv2.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-124, 17633
 smv3.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-82, 17633, 9044)) end)
 vip1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-94, 17633, 9357)) end)
 mv1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-88, 17633, 9224)) end)
-mv2.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-112, 17633, 9224)) end)
+mv2.MouseButton1Click:Connect(function() executeTeleport(CLine or CFrame.new(-112, 17633, 9224)) end)
 
 backBtn.MouseButton1Click:Connect(function()
     if oldPosition then
