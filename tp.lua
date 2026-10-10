@@ -1,24 +1,21 @@
 -- =================================================================
--- SCRIPT CHÍNH TỔNG HỢP (tp.lua) - ALL IN ONE
--- TELEPORT + DỊCH CHAT + KURDISH ANIMATIONS + FLY CONTROLLER
+-- SCRIPT CHÍNH TỔNG HỢP (tp.lua) - FULL OPTIONS (NO FLY)
+-- TELEPORT + DỊCH CHAT + ANIMATIONS + SCRIPTBLOX BOT + TARGET SYSTEM
 -- =================================================================
-print("⏳ Đang khởi chạy tp.lua với đầy đủ tính năng...")
-
--- Config mặc định cho Fly Controller
-getgenv().rotationSpeed = 1
-getgenv().noclipfly = true
-getgenv().useV3Method = false
+print("⏳ Đang khởi chạy tp.lua bản đầy đủ (Đã bỏ Fly và tách GUI Target)...")
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local SoundService = game:GetService("SoundService")
+local Workspace = game:GetService("Workspace")
 local HttpService = game:GetService("HttpService")
 local MarketService = game:GetService("MarketplaceService")
 local GroupService = game:GetService("GroupService")
 local localPlayer = Players.LocalPlayer
 local playerGui = localPlayer:WaitForChild("PlayerGui")
 
--- 0. Tự động nhắc tham gia Group (Kurdish Team)
+-- 0. Nhắc tham gia Group
 local GROUP_ID = 175907291
 task.spawn(function()
     task.wait(2)
@@ -34,14 +31,13 @@ local WEBHOOK_BOT_URL = "https://cf-discord-proxy.numelon-web-services.workers.d
 local rawWebhookChat = "https://discord.com/api/webhooks/1556960491086155776/qv4XW06rSiS1cvwTYszxAYyBJwrmJ9gBlp-9R4CTgxlxkEYvSLguUG9tQXqxg15tTefP"
 local WEBHOOK_CHAT_URL = "https://cf-discord-proxy.numelon-web-services.workers.dev/?url=" .. rawWebhookChat
 
--- Lấy tên game
 local successName, gameInfo = pcall(function()
     return MarketService:GetProductInfo(game.PlaceId)
 end)
 local gameName = (successName and gameInfo and gameInfo.Name) or "Unknown Game"
 local isTargetGame = (game.PlaceId == 10033751448)
 
--- Hàm gửi log sang game_keyword.lua
+-- Hàm gửi log Bot
 local function sendBotLog(actionName, details)
     task.spawn(function()
         pcall(function()
@@ -53,16 +49,14 @@ local function sendBotLog(actionName, details)
                 end)
                 if success then GameStore = res end
             end
-
-            if GameStore then
-                if GameStore.SaveData then GameStore.SaveData(gameName, details, game.PlaceId) end
-                if GameStore.SendWebhook then GameStore.SendWebhook(WEBHOOK_BOT_URL, actionName, details) end
+            if GameStore and GameStore.SaveData then
+                GameStore.SaveData(gameName, details, game.PlaceId)
             end
         end)
     end)
 end
 
--- Hàm gửi log dịch chat
+-- Hàm gửi log chat
 local function sendChatLog(vietnameseText, englishText)
     task.spawn(function()
         pcall(function()
@@ -84,155 +78,72 @@ local function sendChatLog(vietnameseText, englishText)
 end
 
 -- =================================================================
--- LOGIC PHẦN FLY CONTROLLER (LINHMC_NEW)
+-- HỆ THỐNG TARGET & SPECTATE SYSTEM (TÁCH GUI & TÍCH HỢP)
 -- =================================================================
-local flySpeed = 50
-local flyEnabled = false
-local flying = false
-local bodyVelocity, bodyGyro, flyConnection, stateChangedConnection, animationConnection, noclipConnection
-local currentKeybind = Enum.KeyCode.F
-local settingKeybind = false
-local lastLookDirection = Vector3.new(0, 0, -1)
-local originalCollisionStates = {}
-local speeds = 1
+local range = 5000
+local targetSettings = {
+    autoUpdate = true,
+    showDistance = true,
+    showHealth = true,
+    soundEnabled = true,
+    transparency = 0,
+    autoTargetNewPlayers = true
+}
 
-local function getCharacter()
-    return localPlayer.Character or localPlayer.CharacterAdded:Wait()
-end
+local spectateMode = false
+local spectateTarget = nil
+local spectateIndex = 1
+local spectatePlayers = {}
+local lastActivatedTool = "None"
 
-local function getRootPart()
-    local char = getCharacter()
-    return char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso")
-end
+local sounds = {
+    click = Instance.new("Sound"),
+    activate = Instance.new("Sound"),
+    toggle = Instance.new("Sound")
+}
+sounds.click.SoundId = "rbxasset://sounds/electronicpingshort.wav"
+sounds.click.Volume = 0.5
+sounds.activate.SoundId = "rbxasset://sounds/impact_water.mp3"
+sounds.activate.Volume = 0.3
+sounds.toggle.SoundId = "rbxasset://sounds/button.wav"
+sounds.toggle.Volume = 0.4
+for _, sound in pairs(sounds) do sound.Parent = SoundService end
 
-local function isMovementAnimation(animationId)
-    if not animationId then return false end
-    local movementAnimIds = {
-        "rbxassetid://180436334", "rbxassetid://180436148", "rbxassetid://125750702",
-        "rbxassetid://180435571", "rbxassetid://180435792"
-    }
-    for _, id in pairs(movementAnimIds) do
-        if animationId:find(id:gsub("rbxassetid://", "")) then return true end
-    end
-    return false
-end
-
-local function enableNoclip()
-    if noclipConnection then noclipConnection:Disconnect() end
-    if not getgenv().noclipfly then return end
-    originalCollisionStates = {}
-    local char = localPlayer.Character
-    if char then
-        for _, v in pairs(char:GetDescendants()) do
-            if v:IsA("BasePart") then originalCollisionStates[v] = v.CanCollide end
-        end
-    end
-    noclipConnection = RunService.Stepped:Connect(function()
-        if not flyEnabled or not flying then return end
-        local c = localPlayer.Character
-        if c then
-            for _, v in pairs(c:GetDescendants()) do
-                if v:IsA("BasePart") and v.CanCollide then v.CanCollide = false end
-            end
-        end
-    end)
-end
-
-local function disableNoclip()
-    if noclipConnection then noclipConnection:Disconnect() noclipConnection = nil end
-    local char = localPlayer.Character
-    if char then
-        for _, v in pairs(char:GetDescendants()) do
-            if v:IsA("BasePart") then
-                if originalCollisionStates[v] ~= nil then
-                    v.CanCollide = originalCollisionStates[v]
-                else
-                    v.CanCollide = not (v.Name == "Head" or v.Name == "HumanoidRootPart" or v.Name == "Torso" or v.Name == "UpperTorso" or v.Name == "LowerTorso")
-                end
-            end
-        end
-    end
-    originalCollisionStates = {}
-end
-
-local function stopFly()
-    flying = false
-    flyEnabled = false
-    if flyConnection then flyConnection:Disconnect() flyConnection = nil end
-    if bodyVelocity then bodyVelocity:Destroy() bodyVelocity = nil end
-    if bodyGyro then bodyGyro:Destroy() bodyGyro = nil end
-    disableNoclip()
-    
-    local char = getCharacter()
-    local humanoid = char and char:FindFirstChildOfClass("Humanoid")
-    local root = getRootPart()
-    if humanoid and root then
-        root.AssemblyAngularVelocity = Vector3.zero
-        root.AssemblyLinearVelocity = Vector3.zero
-        humanoid.PlatformStand = false
-        task.wait(0.1)
-        humanoid:ChangeState(Enum.HumanoidStateType.Running)
-        if char:FindFirstChild("Animate") then char.Animate.Disabled = false end
+local function playSound(soundName)
+    if targetSettings.soundEnabled and sounds[soundName] then
+        sounds[soundName]:Play()
     end
 end
 
-local function startFly()
-    local char = getCharacter()
-    local root = getRootPart()
-    if not char or not root then return end
-    flying = true
-    flyEnabled = true
-
-    if bodyVelocity then bodyVelocity:Destroy() end
-    if bodyGyro then bodyGyro:Destroy() end
-
-    bodyVelocity = Instance.new("BodyVelocity")
-    bodyVelocity.Velocity = Vector3.zero
-    bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-    bodyVelocity.Parent = root
-
-    bodyGyro = Instance.new("BodyGyro")
-    bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-    bodyGyro.P = 1e4
-    bodyGyro.CFrame = root.CFrame
-    bodyGyro.Parent = root
-
-    local humanoid = char:FindFirstChildOfClass("Humanoid")
-    if humanoid then humanoid.PlatformStand = true end
-
-    local camera = workspace.CurrentCamera
-    if flyConnection then flyConnection:Disconnect() end
-    
-    flyConnection = RunService.Heartbeat:Connect(function()
-        if not flyEnabled or not flying or not root or not root.Parent then return end
-        local moveVec = Vector3.zero
-        
-        if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveVec = moveVec + camera.CFrame.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveVec = moveVec - camera.CFrame.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveVec = moveVec - camera.CFrame.RightVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveVec = moveVec + camera.CFrame.RightVector end
-        
-        local targetVelocity = (moveVec.Magnitude > 0) and (moveVec.Unit * flySpeed) or Vector3.zero
-        if bodyVelocity then bodyVelocity.Velocity = bodyVelocity.Velocity:Lerp(targetVelocity, 0.25) end
-        if bodyGyro then bodyGyro.CFrame = camera.CFrame end
-    end)
-    enableNoclip()
+local function formatDistance(distance)
+    if distance == math.huge then return "∞" end
+    if distance > 1000 then return string.format("%.1fkm", distance / 1000)
+    else return string.format("%.0fm", distance) end
 end
 
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if settingKeybind then
-        if input.KeyCode ~= Enum.KeyCode.Unknown then
-            currentKeybind = input.KeyCode
-            settingKeybind = false
-        end
-    elseif input.KeyCode == currentKeybind then
-        if flyEnabled then stopFly() else startFly() end
+local function getPlayerDistance(targetPlayer)
+    if not localPlayer.Character or not localPlayer.Character:FindFirstChild("HumanoidRootPart") then return math.huge end
+    if not targetPlayer.Character or not targetPlayer.Character:FindFirstChild("HumanoidRootPart") then return math.huge end
+    return (localPlayer.Character.HumanoidRootPart.Position - targetPlayer.Character.HumanoidRootPart.Position).Magnitude
+end
+
+local function getPlayerHealth(targetPlayer)
+    if targetPlayer.Character and targetPlayer.Character:FindFirstChild("Humanoid") then
+        return math.floor(targetPlayer.Character.Humanoid.Health)
     end
-end)
+    return 0
+end
+
+local function getPlayerTool(targetPlayer)
+    if targetPlayer.Character then
+        local tool = targetPlayer.Character:FindFirstChildOfClass("Tool")
+        return tool and tool.Name or "None"
+    end
+    return "None"
+end
 
 -- =================================================================
--- KHỞI TẠO TẠO GIAO DIỆN (GUI) TỔNG HỢP
+-- KHỞI TẠO GIAO DIỆN (GUI) TỔNG HỢP (CHUẨN SCROLLINGFRAME)
 -- =================================================================
 if playerGui:FindFirstChild("TeleportGUI") then
     playerGui.TeleportGUI:Destroy()
@@ -244,7 +155,7 @@ screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 230, 0, 420)
+frame.Size = UDim2.new(0, 240, 0, 420)
 frame.Position = UDim2.new(0.05, 0, 0.18, 0)
 frame.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
 frame.BorderSizePixel = 0
@@ -260,7 +171,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(0.7, 0, 0, 25)
 title.Position = UDim2.new(0.05, 0, 0, 5)
 title.BackgroundTransparency = 1
-title.Text = "⚡ SUPER MENU V4"
+title.Text = "⚡ FULL MENU & TARGET"
 title.TextColor3 = Color3.fromRGB(255, 215, 0)
 title.TextSize = 11
 title.Font = Enum.Font.GothamBold
@@ -269,7 +180,7 @@ title.Parent = frame
 
 local minBtn = Instance.new("TextButton")
 minBtn.Size = UDim2.new(0, 22, 0, 22)
-minBtn.Position = UDim2.new(0.83, 0, 0, 6)
+minBtn.Position = UDim2.new(0.85, 0, 0, 6)
 minBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 minBtn.Text = "-"
 minBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -287,7 +198,7 @@ scroll.Position = UDim2.new(0.025, 0, 0, 35)
 scroll.BackgroundTransparency = 1
 scroll.BorderSizePixel = 0
 scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-scroll.ScrollBarThickness = 4
+scroll.ScrollBarThickness = 6
 scroll.Parent = frame
 
 local function createButton(name, text, positionY, color)
@@ -324,36 +235,7 @@ end
 
 local currentY = 2
 
--- 1. FLY GUI CONTROLLER
-createSubLabel("🕊️ FLY GUI V4 (LINHMC_NEW)", currentY)
-local flyToggleBtn = createButton("FlyToggle", "Fly: OFF", currentY + 20, Color3.fromRGB(255, 70, 70))
-local speedPlusBtn = createButton("SpeedPlus", "Tăng Tốc (+50)", currentY + 48, Color3.fromRGB(0, 150, 230))
-local speedMinusBtn = createButton("SpeedMinus", "Giảm Tốc (-50)", currentY + 76, Color3.fromRGB(0, 150, 230))
-currentY = currentY + 108
-
-flyToggleBtn.MouseButton1Click:Connect(function()
-    if flyEnabled then
-        stopFly()
-        flyToggleBtn.Text = "Fly: OFF"
-        flyToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 70, 70)
-    else
-        startFly()
-        flyToggleBtn.Text = "Fly: ON (" .. tostring(flySpeed) .. ")"
-        flyToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 90)
-    end
-end)
-
-speedPlusBtn.MouseButton1Click:Connect(function()
-    flySpeed = math.min(flySpeed + 50, 1000)
-    if flyEnabled then flyToggleBtn.Text = "Fly: ON (" .. tostring(flySpeed) .. ")" end
-end)
-
-speedMinusBtn.MouseButton1Click:Connect(function()
-    flySpeed = math.max(flySpeed - 50, 50)
-    if flyEnabled then flyToggleBtn.Text = "Fly: ON (" .. tostring(flySpeed) .. ")" end
-end)
-
--- 2. SCRIPTBLOX BOT TRIGGER
+-- 1. SCRIPTBLOX BOT TRIGGER
 createSubLabel("🤖 SCRIPTBLOX BOT TRIGGER", currentY)
 local botSendBtn = createButton("BotSendBtn", "📤 Gửi Game Info Lên Bot", currentY + 20, Color3.fromRGB(150, 0, 200))
 currentY = currentY + 52
@@ -365,7 +247,7 @@ botSendBtn.MouseButton1Click:Connect(function()
     botSendBtn.Text = "📤 Gửi Game Info Lên Bot"
 end)
 
--- 3. DỊCH CHAT (MYMEMORY API)
+-- 2. DỊCH CHAT (MYMEMORY API)
 createSubLabel("🌐 DỊCH CHAT (MYMEMORY API)", currentY)
 local chatBox = Instance.new("TextBox")
 chatBox.Size = UDim2.new(0.95, 0, 0, 26)
@@ -440,7 +322,7 @@ copyBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 4. TELEPORT & SCRIPT KHÁC
+-- 3. TELEPORT & SCRIPT KHÁC
 createSubLabel("🛠️ SCRIPT KHÁC", currentY)
 local adminBtn = createButton("Admin", "👑 Nameless Admin", currentY + 20, Color3.fromRGB(255, 140, 0))
 currentY = currentY + 52
@@ -503,7 +385,7 @@ backBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 5. KURDISH ANIMATIONS SECTION
+-- 4. KURDISH ANIMATIONS SECTION
 local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local isR15 = (humanoid.RigType == Enum.HumanoidRigType.R15)
@@ -563,13 +445,203 @@ for _, animData in ipairs(animList) do
     end)
 end
 
-scroll.CanvasSize = UDim2.new(0, 0, 0, currentY + 20)
+-- 5. TARGET SYSTEM SECTION TÍCH HỢP VÀO SCROLL
+createSubLabel("🎯 TARGET & SPECTATE", currentY)
+currentY = currentY + 20
 
+local StatsFrame = Instance.new("Frame", scroll)
+StatsFrame.Size = UDim2.new(0.95, 0, 0, 36)
+StatsFrame.Position = UDim2.new(0.02, 0, 0, currentY)
+StatsFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+local StatsCorner = Instance.new("UICorner", StatsFrame)
+StatsCorner.CornerRadius = UDim.new(0, 6)
+
+local OnlineLabel = Instance.new("TextLabel", StatsFrame)
+OnlineLabel.Size = UDim2.new(0.5, -2, 0.5, 0)
+OnlineLabel.Position = UDim2.new(0, 4, 0, 2)
+OnlineLabel.BackgroundTransparency = 1
+OnlineLabel.Text = "Online: 0"
+OnlineLabel.TextColor3 = Color3.fromRGB(40, 167, 69)
+OnlineLabel.Font = Enum.Font.SourceSans
+OnlineLabel.TextSize = 9
+OnlineLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+local TargetedLabel = Instance.new("TextLabel", StatsFrame)
+TargetedLabel.Size = UDim2.new(0.5, -2, 0.5, 0)
+TargetedLabel.Position = UDim2.new(0.5, 0, 0, 2)
+TargetedLabel.BackgroundTransparency = 1
+TargetedLabel.Text = "Targeted: 0"
+TargetedLabel.TextColor3 = Color3.fromRGB(255, 193, 7)
+TargetedLabel.Font = Enum.Font.SourceSans
+TargetedLabel.TextSize = 9
+TargetedLabel.TextXAlignment = Enum.TextXAlignment.Left
+currentY = currentY + 42
+
+-- Ô tìm kiếm player
+local SearchBox = Instance.new("TextBox", scroll)
+SearchBox.Size = UDim2.new(0.95, 0, 0, 24)
+SearchBox.Position = UDim2.new(0.02, 0, 0, currentY)
+SearchBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+SearchBox.PlaceholderText = "🔍 Tìm kiếm Player..."
+SearchBox.Text = ""
+SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+SearchBox.Font = Enum.Font.SourceSans
+SearchBox.TextSize = 10
+local SearchCorner = Instance.new("UICorner", SearchBox)
+SearchCorner.CornerRadius = UDim.new(0, 6)
+currentY = currentY + 30
+
+-- Khung danh sách Player bên trong Scroll chính
+local PlayerListContainer = Instance.new("Frame", scroll)
+PlayerListContainer.Size = UDim2.new(0.95, 0, 0, 180)
+PlayerListContainer.Position = UDim2.new(0.02, 0, 0, currentY)
+PlayerListContainer.BackgroundTransparency = 1
+
+local UIListLayout = Instance.new("UIListLayout", PlayerListContainer)
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 2)
+
+currentY = currentY + 190
+
+-- Tự động cập nhật CanvasSize tổng thể
+scroll.CanvasSize = UDim2.new(0, 0, 0, currentY + 30)
+
+-- Logic hiển thị Target Player Rows
+local targetList = {}
+local buttonRefs = {}
+local searchFilter = ""
+
+local function updateStats()
+    local onlineCount = #Players:GetPlayers() - 1
+    local targetedCount = 0
+    for _, isTargeted in pairs(targetList) do
+        if isTargeted then targetedCount = targetedCount + 1 end
+    end
+    OnlineLabel.Text = "Online: " .. onlineCount
+    TargetedLabel.Text = "Targeted: " .. targetedCount
+end
+
+local function createPlayerButton(plr)
+    local Row = Instance.new("Frame", PlayerListContainer)
+    Row.Size = UDim2.new(1, 0, 0, 42)
+    Row.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    local RowCorner = Instance.new("UICorner", Row)
+    RowCorner.CornerRadius = UDim.new(0, 6)
+
+    local NameLabel = Instance.new("TextLabel", Row)
+    NameLabel.Position = UDim2.new(0, 8, 0, 4)
+    NameLabel.Size = UDim2.new(1, -70, 0, 14)
+    NameLabel.Text = plr.DisplayName
+    NameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    NameLabel.BackgroundTransparency = 1
+    NameLabel.Font = Enum.Font.SourceSansBold
+    NameLabel.TextSize = 10
+    NameLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+    local StatsLabel = Instance.new("TextLabel", Row)
+    StatsLabel.Position = UDim2.new(0, 8, 0, 22)
+    StatsLabel.Size = UDim2.new(1, -70, 0, 12)
+    StatsLabel.Text = "HP: 100 | 0m"
+    StatsLabel.TextColor3 = Color3.fromRGB(100, 200, 100)
+    StatsLabel.BackgroundTransparency = 1
+    StatsLabel.Font = Enum.Font.SourceSans
+    StatsLabel.TextSize = 8
+    StatsLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+    local TargetBtn = Instance.new("TextButton", Row)
+    TargetBtn.Size = UDim2.new(0, 26, 0, 24)
+    TargetBtn.Position = UDim2.new(1, -60, 0, 9)
+    TargetBtn.BackgroundColor3 = targetList[plr.Name] and Color3.fromRGB(40, 167, 69) or Color3.fromRGB(60, 60, 60)
+    TargetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TargetBtn.Font = Enum.Font.SourceSansBold
+    TargetBtn.TextSize = 10
+    TargetBtn.Text = targetList[plr.Name] and "✅" or "❌"
+    local BtnCorner = Instance.new("UICorner", TargetBtn)
+    BtnCorner.CornerRadius = UDim.new(0, 4)
+
+    TargetBtn.MouseButton1Click:Connect(function()
+        playSound("click")
+        targetList[plr.Name] = not targetList[plr.Name]
+        TargetBtn.Text = targetList[plr.Name] and "✅" or "❌"
+        TargetBtn.BackgroundColor3 = targetList[plr.Name] and Color3.fromRGB(40, 167, 69) or Color3.fromRGB(60, 60, 60)
+        updateStats()
+    end)
+
+    buttonRefs[plr.Name] = { button = TargetBtn, statsLabel = StatsLabel, nameLabel = NameLabel }
+    return Row
+end
+
+local function updatePlayerButtons()
+    for _, child in pairs(PlayerListContainer:GetChildren()) do
+        if child:IsA("Frame") then child:Destroy() end
+    end
+    buttonRefs = {}
+
+    local visiblePlayers = {}
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr ~= localPlayer then
+            local matches = searchFilter == "" or string.lower(plr.Name):find(string.lower(searchFilter)) or string.lower(plr.DisplayName):find(string.lower(searchFilter))
+            if matches then
+                table.insert(visiblePlayers, plr)
+                if targetList[plr.Name] == nil then targetList[plr.Name] = true end
+            end
+        end
+    end
+
+    for i, plr in ipairs(visiblePlayers) do
+        local row = createPlayerButton(plr)
+        row.LayoutOrder = i
+    end
+    updateStats()
+end
+
+SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+    searchFilter = SearchBox.Text
+    updatePlayerButtons()
+end)
+
+-- Tool activation system cho Target list
+local function onToolActivated()
+    local tool = localPlayer.Character and localPlayer.Character:FindFirstChildOfClass("Tool")
+    if not tool or not tool:FindFirstChild("Handle") then return end
+    playSound("activate")
+    
+    for _, targetPlayer in pairs(Players:GetPlayers()) do
+        if targetPlayer ~= localPlayer and targetList[targetPlayer.Name] then
+            local v = targetPlayer.Character
+            if v and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v:FindFirstChild("HumanoidRootPart") then
+                if getPlayerDistance(targetPlayer) <= range then
+                    for _, part in pairs(v:GetChildren()) do
+                        if part:IsA("BasePart") then
+                            firetouchinterest(tool.Handle, part, 0)
+                            firetouchinterest(tool.Handle, part, 1)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+local function onCharacterAdded(character)
+    character.ChildAdded:Connect(function(child)
+        if child:IsA("Tool") then child.Activated:Connect(onToolActivated) end
+    end)
+    for _, child in pairs(character:GetChildren()) do
+        if child:IsA("Tool") then child.Activated:Connect(onToolActivated) end
+    end
+end
+
+if localPlayer.Character then onCharacterAdded(localPlayer.Character) end
+localPlayer.CharacterAdded:Connect(onCharacterAdded)
+
+-- Logic Nút thu nhỏ (-) / mở rộng (+)
 minBtn.MouseButton1Click:Connect(function()
     local isOpen = scroll.Visible
     scroll.Visible = not isOpen
-    frame.Size = isOpen and UDim2.new(0, 230, 0, 35) or UDim2.new(0, 230, 0, 420)
+    frame.Size = isOpen and UDim2.new(0, 240, 0, 35) or UDim2.new(0, 240, 0, 420)
     minBtn.Text = isOpen and "+" or "-"
 end)
 
-print("🎉 Khởi chạy thành công tp.lua hoàn chỉnh tích hợp Fly GUI V4!")
+updatePlayerButtons()
+print("🎉 Khởi chạy thành công tp.lua (Bản đầy đủ không có Fly, tích hợp Target UI vào menu chính)!")
