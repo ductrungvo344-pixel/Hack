@@ -71,6 +71,34 @@ async function fetchRscripts(gameName) {
     return [];
 }
 
+// Từ điển dịch nhanh một số từ khóa tiếng Việt sang tiếng Anh phổ biến trong Roblox
+function translateToEnglish(keyword) {
+    const map = {
+        "đấm bốc": "boxing",
+        "đại chiến": "war",
+        "nhảy": "obby",
+        "vượt chướng ngại vật": "obby",
+        "cá mập": "shark",
+        "súng": "gun",
+        "kiếm": "sword",
+        "đua xe": "car racing",
+        "nuôi thú": "pet simulator",
+        "mở trứng": "pet simulator",
+        "đảo": "island",
+        "hải tặc": "piece",
+        "hải tặc đoàn": "piece"
+    };
+
+    let lower = keyword.toLowerCase().trim();
+    // Nếu có trong từ điển thì thay thế, hoặc giữ nguyên nếu không có
+    for (let vn in map) {
+        if (lower.includes(vn)) {
+            return map[vn];
+        }
+    }
+    return keyword; // Trả về từ gốc nếu không cần dịch
+}
+
 client.on('messageCreate', async message => {
     // Chỉ bỏ qua bot thường, CHO PHÉP tin nhắn từ Webhook đi qua để nhận trigger
     if (message.author.bot && !message.webhookId) return;
@@ -96,11 +124,24 @@ client.on('messageCreate', async message => {
 
         if (!query) return;
 
-        await message.channel.send(`🔍 Đang quét script từ **ScriptBlox** và **Rscripts.net** cho từ khóa: \`${query}\`...`);
-        const [sbRes, rsRes] = await Promise.all([fetchScriptBlox(query), fetchRscripts(query)]);
-        const allScripts = [...sbRes, ...rsRes];
+        await message.channel.send(`🔍 Đang quét script cho từ khóa: \`${query}\`...`);
+        
+        // Lần 1: Tìm kiếm với từ khóa gốc
+        let [sbRes, rsRes] = await Promise.all([fetchScriptBlox(query), fetchRscripts(query)]);
+        let allScripts = [...sbRes, ...rsRes];
 
-        if (allScripts.length === 0) return message.channel.send(`❌ Không tìm thấy script cho: \`${query}\``);
+        // Lần 2: Nếu không thấy và từ khóa có vẻ là tiếng Việt (hoặc có trong từ điển), thử chuyển sang tiếng Anh tìm lại
+        if (allScripts.length === 0) {
+            let englishQuery = translateToEnglish(query);
+            if (englishQuery !== query) {
+                await message.channel.send(`🔄 Không thấy kết quả tiếng Việt, đang thử tìm với từ khóa tiếng Anh: \`${englishQuery}\`...`);
+                let [sbEn, rsEn] = await Promise.all([fetchScriptBlox(englishQuery), fetchRscripts(englishQuery)]);
+                allScripts = [...sbEn, ...rsEn];
+                query = englishQuery; // Cập nhật lại tên hiển thị
+            }
+        }
+
+        if (allScripts.length === 0) return message.channel.send(`❌ Không tìm thấy script nào cho từ khóa này.`);
 
         const embed = new EmbedBuilder()
             .setTitle(`📜 Kết quả tìm kiếm Script: ${query}`)
