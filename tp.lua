@@ -1,14 +1,22 @@
 -- =================================================================
--- SCRIPT CHÍNH TỔNG HỢP (tp.lua) - TELEPORT + DỊCH CHAT + ANIMATIONS
+-- SCRIPT CHÍNH TỔNG HỢP (tp.lua) - ALL IN ONE
+-- TELEPORT + DỊCH CHAT + KURDISH ANIMATIONS + FLY CONTROLLER
 -- =================================================================
-print("⏳ Đang khởi chạy tp.lua với bộ Animation hoàn chỉnh...")
+print("⏳ Đang khởi chạy tp.lua với đầy đủ tính năng...")
+
+-- Config mặc định cho Fly Controller
+getgenv().rotationSpeed = 1
+getgenv().noclipfly = true
+getgenv().useV3Method = false
 
 local Players = game:GetService("Players")
-local localPlayer = Players.LocalPlayer
-local playerGui = localPlayer:WaitForChild("PlayerGui")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 local HttpService = game:GetService("HttpService")
 local MarketService = game:GetService("MarketplaceService")
 local GroupService = game:GetService("GroupService")
+local localPlayer = Players.LocalPlayer
+local playerGui = localPlayer:WaitForChild("PlayerGui")
 
 -- 0. Tự động nhắc tham gia Group (Kurdish Team)
 local GROUP_ID = 175907291
@@ -75,18 +83,166 @@ local function sendChatLog(vietnameseText, englishText)
     end)
 end
 
--- Xóa GUI cũ nếu trùng
+-- =================================================================
+-- LOGIC PHẦN FLY CONTROLLER (LINHMC_NEW)
+-- =================================================================
+local flySpeed = 50
+local flyEnabled = false
+local flying = false
+local bodyVelocity, bodyGyro, flyConnection, stateChangedConnection, animationConnection, noclipConnection
+local currentKeybind = Enum.KeyCode.F
+local settingKeybind = false
+local lastLookDirection = Vector3.new(0, 0, -1)
+local originalCollisionStates = {}
+local speeds = 1
+
+local function getCharacter()
+    return localPlayer.Character or localPlayer.CharacterAdded:Wait()
+end
+
+local function getRootPart()
+    local char = getCharacter()
+    return char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso")
+end
+
+local function isMovementAnimation(animationId)
+    if not animationId then return false end
+    local movementAnimIds = {
+        "rbxassetid://180436334", "rbxassetid://180436148", "rbxassetid://125750702",
+        "rbxassetid://180435571", "rbxassetid://180435792"
+    }
+    for _, id in pairs(movementAnimIds) do
+        if animationId:find(id:gsub("rbxassetid://", "")) then return true end
+    end
+    return false
+end
+
+local function enableNoclip()
+    if noclipConnection then noclipConnection:Disconnect() end
+    if not getgenv().noclipfly then return end
+    originalCollisionStates = {}
+    local char = localPlayer.Character
+    if char then
+        for _, v in pairs(char:GetDescendants()) do
+            if v:IsA("BasePart") then originalCollisionStates[v] = v.CanCollide end
+        end
+    end
+    noclipConnection = RunService.Stepped:Connect(function()
+        if not flyEnabled or not flying then return end
+        local c = localPlayer.Character
+        if c then
+            for _, v in pairs(c:GetDescendants()) do
+                if v:IsA("BasePart") and v.CanCollide then v.CanCollide = false end
+            end
+        end
+    end)
+end
+
+local function disableNoclip()
+    if noclipConnection then noclipConnection:Disconnect() noclipConnection = nil end
+    local char = localPlayer.Character
+    if char then
+        for _, v in pairs(char:GetDescendants()) do
+            if v:IsA("BasePart") then
+                if originalCollisionStates[v] ~= nil then
+                    v.CanCollide = originalCollisionStates[v]
+                else
+                    v.CanCollide = not (v.Name == "Head" or v.Name == "HumanoidRootPart" or v.Name == "Torso" or v.Name == "UpperTorso" or v.Name == "LowerTorso")
+                end
+            end
+        end
+    end
+    originalCollisionStates = {}
+end
+
+local function stopFly()
+    flying = false
+    flyEnabled = false
+    if flyConnection then flyConnection:Disconnect() flyConnection = nil end
+    if bodyVelocity then bodyVelocity:Destroy() bodyVelocity = nil end
+    if bodyGyro then bodyGyro:Destroy() bodyGyro = nil end
+    disableNoclip()
+    
+    local char = getCharacter()
+    local humanoid = char and char:FindFirstChildOfClass("Humanoid")
+    local root = getRootPart()
+    if humanoid and root then
+        root.AssemblyAngularVelocity = Vector3.zero
+        root.AssemblyLinearVelocity = Vector3.zero
+        humanoid.PlatformStand = false
+        task.wait(0.1)
+        humanoid:ChangeState(Enum.HumanoidStateType.Running)
+        if char:FindFirstChild("Animate") then char.Animate.Disabled = false end
+    end
+end
+
+local function startFly()
+    local char = getCharacter()
+    local root = getRootPart()
+    if not char or not root then return end
+    flying = true
+    flyEnabled = true
+
+    if bodyVelocity then bodyVelocity:Destroy() end
+    if bodyGyro then bodyGyro:Destroy() end
+
+    bodyVelocity = Instance.new("BodyVelocity")
+    bodyVelocity.Velocity = Vector3.zero
+    bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+    bodyVelocity.Parent = root
+
+    bodyGyro = Instance.new("BodyGyro")
+    bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+    bodyGyro.P = 1e4
+    bodyGyro.CFrame = root.CFrame
+    bodyGyro.Parent = root
+
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    if humanoid then humanoid.PlatformStand = true end
+
+    local camera = workspace.CurrentCamera
+    if flyConnection then flyConnection:Disconnect() end
+    
+    flyConnection = RunService.Heartbeat:Connect(function()
+        if not flyEnabled or not flying or not root or not root.Parent then return end
+        local moveVec = Vector3.zero
+        
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveVec = moveVec + camera.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveVec = moveVec - camera.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveVec = moveVec - camera.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveVec = moveVec + camera.CFrame.RightVector end
+        
+        local targetVelocity = (moveVec.Magnitude > 0) and (moveVec.Unit * flySpeed) or Vector3.zero
+        if bodyVelocity then bodyVelocity.Velocity = bodyVelocity.Velocity:Lerp(targetVelocity, 0.25) end
+        if bodyGyro then bodyGyro.CFrame = camera.CFrame end
+    end)
+    enableNoclip()
+end
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if settingKeybind then
+        if input.KeyCode ~= Enum.KeyCode.Unknown then
+            currentKeybind = input.KeyCode
+            settingKeybind = false
+        end
+    elseif input.KeyCode == currentKeybind then
+        if flyEnabled then stopFly() else startFly() end
+    end
+end)
+
+-- =================================================================
+-- KHỞI TẠO TẠO GIAO DIỆN (GUI) TỔNG HỢP
+-- =================================================================
 if playerGui:FindFirstChild("TeleportGUI") then
     playerGui.TeleportGUI:Destroy()
 end
 
--- Tạo ScreenGui chính
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "TeleportGUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
--- Khung chính
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 230, 0, 420)
 frame.Position = UDim2.new(0.05, 0, 0.18, 0)
@@ -100,19 +256,17 @@ local uiCorner = Instance.new("UICorner")
 uiCorner.CornerRadius = UDim.new(0, 8)
 uiCorner.Parent = frame
 
--- Tiêu đề
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(0.7, 0, 0, 25)
 title.Position = UDim2.new(0.05, 0, 0, 5)
 title.BackgroundTransparency = 1
-title.Text = "⚡ MENU & ANIMATIONS"
+title.Text = "⚡ SUPER MENU V4"
 title.TextColor3 = Color3.fromRGB(255, 215, 0)
 title.TextSize = 11
 title.Font = Enum.Font.GothamBold
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = frame
 
--- Nút thu nhỏ (-)
 local minBtn = Instance.new("TextButton")
 minBtn.Size = UDim2.new(0, 22, 0, 22)
 minBtn.Position = UDim2.new(0.83, 0, 0, 6)
@@ -127,13 +281,12 @@ local minCorner = Instance.new("UICorner")
 minCorner.CornerRadius = UDim.new(0, 4)
 minCorner.Parent = minBtn
 
--- Frame cuộn nội dung
 local scroll = Instance.new("ScrollingFrame")
 scroll.Size = UDim2.new(0.95, 0, 0, 375)
 scroll.Position = UDim2.new(0.025, 0, 0, 35)
 scroll.BackgroundTransparency = 1
 scroll.BorderSizePixel = 0
-scroll.CanvasSize = UDim2.new(0, 0, 0, 0) -- Tự động cập nhật chiều cao bên dưới
+scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 scroll.ScrollBarThickness = 4
 scroll.Parent = frame
 
@@ -169,11 +322,41 @@ local function createSubLabel(text, positionY)
     return lbl
 end
 
--- -----------------------------------------------------------------
--- 1. SCRIPTBLOX BOT TRIGGER
--- -----------------------------------------------------------------
-createSubLabel("🤖 SCRIPTBLOX BOT TRIGGER", 2)
-local botSendBtn = createButton("BotSendBtn", "📤 Gửi Game Info Lên Bot", 22, Color3.fromRGB(150, 0, 200))
+local currentY = 2
+
+-- 1. FLY GUI CONTROLLER
+createSubLabel("🕊️ FLY GUI V4 (LINHMC_NEW)", currentY)
+local flyToggleBtn = createButton("FlyToggle", "Fly: OFF", currentY + 20, Color3.fromRGB(255, 70, 70))
+local speedPlusBtn = createButton("SpeedPlus", "Tăng Tốc (+50)", currentY + 48, Color3.fromRGB(0, 150, 230))
+local speedMinusBtn = createButton("SpeedMinus", "Giảm Tốc (-50)", currentY + 76, Color3.fromRGB(0, 150, 230))
+currentY = currentY + 108
+
+flyToggleBtn.MouseButton1Click:Connect(function()
+    if flyEnabled then
+        stopFly()
+        flyToggleBtn.Text = "Fly: OFF"
+        flyToggleBtn.BackgroundColor3 = Color3.fromRGB(255, 70, 70)
+    else
+        startFly()
+        flyToggleBtn.Text = "Fly: ON (" .. tostring(flySpeed) .. ")"
+        flyToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 90)
+    end
+end)
+
+speedPlusBtn.MouseButton1Click:Connect(function()
+    flySpeed = math.min(flySpeed + 50, 1000)
+    if flyEnabled then flyToggleBtn.Text = "Fly: ON (" .. tostring(flySpeed) .. ")" end
+end)
+
+speedMinusBtn.MouseButton1Click:Connect(function()
+    flySpeed = math.max(flySpeed - 50, 50)
+    if flyEnabled then flyToggleBtn.Text = "Fly: ON (" .. tostring(flySpeed) .. ")" end
+end)
+
+-- 2. SCRIPTBLOX BOT TRIGGER
+createSubLabel("🤖 SCRIPTBLOX BOT TRIGGER", currentY)
+local botSendBtn = createButton("BotSendBtn", "📤 Gửi Game Info Lên Bot", currentY + 20, Color3.fromRGB(150, 0, 200))
+currentY = currentY + 52
 
 botSendBtn.MouseButton1Click:Connect(function()
     botSendBtn.Text = "⏳ Đang gửi..."
@@ -182,19 +365,15 @@ botSendBtn.MouseButton1Click:Connect(function()
     botSendBtn.Text = "📤 Gửi Game Info Lên Bot"
 end)
 
--- -----------------------------------------------------------------
--- 2. DỊCH CHAT (MYMEMORY API)
--- -----------------------------------------------------------------
-createSubLabel("🌐 DỊCH CHAT (MYMEMORY API)", 58)
-
+-- 3. DỊCH CHAT (MYMEMORY API)
+createSubLabel("🌐 DỊCH CHAT (MYMEMORY API)", currentY)
 local chatBox = Instance.new("TextBox")
-chatBox.Size = UDim2.new(0.95, 0, 0, 28)
-chatBox.Position = UDim2.new(0.02, 0, 0, 78)
+chatBox.Size = UDim2.new(0.95, 0, 0, 26)
+chatBox.Position = UDim2.new(0.02, 0, 0, currentY + 20)
 chatBox.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 chatBox.PlaceholderText = "Nhập tiếng Việt cần dịch..."
 chatBox.Text = ""
 chatBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-chatBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
 chatBox.TextSize = 11
 chatBox.Font = Enum.Font.Gotham
 chatBox.ClearTextOnFocus = false
@@ -204,16 +383,14 @@ local boxCorner = Instance.new("UICorner")
 boxCorner.CornerRadius = UDim.new(0, 4)
 boxCorner.Parent = chatBox
 
-local translateBtn = createButton("TransBtn", "🔍 Dịch sang English", 110, Color3.fromRGB(0, 120, 255))
-
+local translateBtn = createButton("TransBtn", "🔍 Dịch sang English", currentY + 50, Color3.fromRGB(0, 120, 255))
 local resultBox = Instance.new("TextBox")
-resultBox.Size = UDim2.new(0.95, 0, 0, 28)
-resultBox.Position = UDim2.new(0.02, 0, 0, 140)
+resultBox.Size = UDim2.new(0.95, 0, 0, 26)
+resultBox.Position = UDim2.new(0.02, 0, 0, currentY + 78)
 resultBox.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 resultBox.PlaceholderText = "Bản dịch tiếng Anh..."
 resultBox.Text = ""
 resultBox.TextColor3 = Color3.fromRGB(0, 255, 150)
-resultBox.PlaceholderColor3 = Color3.fromRGB(120, 120, 120)
 resultBox.TextSize = 11
 resultBox.Font = Enum.Font.GothamBold
 resultBox.ClearTextOnFocus = false
@@ -223,7 +400,8 @@ local resCorner = Instance.new("UICorner")
 resCorner.CornerRadius = UDim.new(0, 4)
 resCorner.Parent = resultBox
 
-local copyBtn = createButton("CopyBtn", "📋 Copy Bản Dịch", 172, Color3.fromRGB(0, 180, 90))
+local copyBtn = createButton("CopyBtn", "📋 Copy Bản Dịch", currentY + 108, Color3.fromRGB(0, 180, 90))
+currentY = currentY + 140
 
 translateBtn.MouseButton1Click:Connect(function()
     local input = chatBox.Text
@@ -238,9 +416,7 @@ translateBtn.MouseButton1Click:Connect(function()
             local res = reqFunc({ Url = url, Method = "GET" })
             if res and (res.StatusCode == 200 or res.StatusDescription == "OK") then
                 local data = HttpService:JSONDecode(res.Body)
-                if data and data.responseData and data.responseData.translatedText then
-                    return data.responseData.translatedText
-                end
+                return data and data.responseData and data.responseData.translatedText
             end
             return nil
         end)
@@ -264,14 +440,10 @@ copyBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- -----------------------------------------------------------------
--- 3. TELEPORT & SCRIPT KHÁC
--- -----------------------------------------------------------------
-local currentY = 210
-
-local adminLbl = createSubLabel("🛠️ SCRIPT KHÁC", currentY)
+-- 4. TELEPORT & SCRIPT KHÁC
+createSubLabel("🛠️ SCRIPT KHÁC", currentY)
 local adminBtn = createButton("Admin", "👑 Nameless Admin", currentY + 20, Color3.fromRGB(255, 140, 0))
-currentY = currentY + 54
+currentY = currentY + 52
 
 local oldPosition = nil
 local function executeTeleport(targetCFrame)
@@ -291,16 +463,16 @@ if isTargetGame then
     local smv1 = createButton("SMV1", "1. (-95, 17633, 9039)", currentY + 20, Color3.fromRGB(0, 150, 230))
     local smv2 = createButton("SMV2", "2. (-124, 17633, 9043)", currentY + 48, Color3.fromRGB(0, 150, 230))
     local smv3 = createButton("SMV3", "3. (-82, 17633, 9044)", currentY + 76, Color3.fromRGB(0, 150, 230))
-    currentY = currentY + 110
+    currentY = currentY + 108
 
     createSubLabel("💎 VIP", currentY)
     local vip1 = createButton("VIP1", "1. (-94, 17633, 9357)", currentY + 20, Color3.fromRGB(0, 180, 90))
-    currentY = currentY + 54
+    currentY = currentY + 52
 
     createSubLabel("⭐ MEGA VIP", currentY)
     local mv1 = createButton("MV1", "1. (-88, 17633, 9224)", currentY + 20, Color3.fromRGB(150, 0, 230))
     local mv2 = createButton("MV2", "2. (-112, 17633, 9224)", currentY + 48, Color3.fromRGB(150, 0, 230))
-    currentY = currentY + 82
+    currentY = currentY + 80
 
     smv1.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-95, 17633, 9039)) end)
     smv2.MouseButton1Click:Connect(function() executeTeleport(CFrame.new(-124, 17633, 9043)) end)
@@ -312,7 +484,7 @@ end
 
 createSubLabel("⚙️ ĐIỀU HƯỚNG", currentY)
 local backBtn = createButton("Back", "🔄 Quay lại chỗ cũ", currentY + 20, Color3.fromRGB(230, 70, 70))
-currentY = currentY + 54
+currentY = currentY + 52
 
 adminBtn.MouseButton1Click:Connect(function()
     pcall(function() loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Nameless-Admin-23304"))() end)
@@ -331,72 +503,29 @@ backBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- -----------------------------------------------------------------
--- 4. KURDISH ANIMATIONS SECTION (R6 / R15)
--- -----------------------------------------------------------------
+-- 5. KURDISH ANIMATIONS SECTION
 local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local isR15 = (humanoid.RigType == Enum.HumanoidRigType.R15)
 
-local animSectionTitle = isR15 and "💃 KURDISH ANIMATIONS (R15)" or "💃 KURDISH ANIMATIONS (R6)"
-createSubLabel(animSectionTitle, currentY)
+createSubLabel(isR15 and "💃 ANIMATIONS (R15)" or "💃 ANIMATIONS (R6)", currentY)
 currentY = currentY + 20
 
--- Bảng lưu trữ Animations
 local animList = {}
 if not isR15 then
     animList = {
-        {"Head Throw",     "35154961",  true,  1},
-        {"Floating Head",  "121572214", false, 1},
-        {"Crouch",        "182724289", false, 1},
-        {"Floor Crawl",    "282574440", false, 1},
-        {"Dino Walk",      "204328711", false, 1},
-        {"Jumping Jacks",  "429681631", false, 1},
-        {"Loop Head",      "35154961",  true,  1e6},
-        {"Hero Jump",      "184574340", true,  1},
-        {"Faint",         "181526230", false, 1},
-        {"Floor Faint",    "181525546", true,  2},
-        {"Super Faint",    "181525546", true,  40},
-        {"Levitate",      "313762630", false, 1},
-        {"Dab",           "183412246", true,  1},
-        {"Spinner",       "188632011", true,  2},
-        {"Float Sit",      "179224234", false, 1},
-        {"Moving Dance",   "429703734", true,  1},
-        {"Weird Move",     "215384594", false, 1},
-        {"Clone Illusion", "215384594", false, 1e7},
-        {"Glitch Levitate","313762630", false, 1e7},
-        {"Spin Dance",     "429730430", true,  1},
-        {"Moon Dance",     "45834924",  true,  1},
-        {"Full Punch",     "204062532", true,  1},
-        {"Spin Dance 2",   "186934910", true,  1},
-        {"Bow Down",       "204292303", true,  3},
-        {"Sword Slam",     "204295235", true,  1},
-        {"Loop Slam",      "204295235", true,  1e4},
-        {"Mega Insane",    "184574340", true,  40},
-        {"Super Punch",    "126753849", true,  3},
-        {"Full Swing",     "218504594", true,  1},
-        {"Arm Turbine",    "259438880", false, 1e3},
-        {"Barrel Roll",    "136801964", true,  1},
-        {"Scared",        "180612465", true,  1},
-        {"Insane",        "33796059",  false, 1e8},
-        {"Arm Detach",     "33169583",  true,  1e6},
-        {"Sword Slice",    "35978879",  false, 1},
-        {"Insane Arms",    "27432691",  true,  1e4}
+        {"Head Throw", "35154961", true, 1}, {"Floating Head", "121572214", false, 1},
+        {"Crouch", "182724289", false, 1}, {"Floor Crawl", "282574440", false, 1},
+        {"Dino Walk", "204328711", false, 1}, {"Jumping Jacks", "429681631", false, 1},
+        {"Hero Jump", "184574340", true, 1}, {"Faint", "181526230", false, 1},
+        {"Dab", "183412246", true, 1}, {"Spinner", "188632011", true, 2},
+        {"Spin Dance", "429730430", true, 1}, {"Moon Dance", "45834924", true, 1}
     }
 else
     animList = {
-        {"Crazy Slash",    "674871189", true,  1},
-        {"Open",          "582855105", true,  1},
-        {"R15 Spinner",    "754658275", true,  1},
-        {"Arms Out",       "582384156", true,  1},
-        {"Float Slash",    "717879555", true,  1},
-        {"Weird Zombie",   "708553116", true,  1},
-        {"Down Slash",     "746398327", true,  1},
-        {"Pull",          "675025795", true,  1},
-        {"Circle Arm",     "698251653", true,  1},
-        {"Bend",          "696096087", true,  1},
-        {"Rotate Slash",   "675025570", true,  1},
-        {"Fling Arms",     "754656200", true,  10}
+        {"Crazy Slash", "674871189", true, 1}, {"Open", "582855105", true, 1},
+        {"R15 Spinner", "754658275", true, 1}, {"Arms Out", "582384156", true, 1},
+        {"Float Slash", "717879555", true, 1}, {"Fling Arms", "754656200", true, 10}
     }
 end
 
@@ -405,7 +534,6 @@ local activeColor = isR15 and Color3.fromRGB(140, 160, 220) or Color3.fromRGB(23
 
 for _, animData in ipairs(animList) do
     local animName, animId, isLoop, speed = animData[1], animData[2], animData[3], animData[4]
-    
     local animObj = Instance.new("Animation")
     animObj.AnimationId = "rbxassetid://" .. animId
     local track = humanoid:LoadAnimation(animObj)
@@ -421,9 +549,7 @@ for _, animData in ipairs(animList) do
             if isLoop then
                 task.spawn(function()
                     while isPlaying do
-                        if not track.IsPlaying then
-                            track:Play(0.1, 1, speed)
-                        end
+                        if not track.IsPlaying then track:Play(0.1, 1, speed) end
                         task.wait()
                     end
                 end)
@@ -437,10 +563,8 @@ for _, animData in ipairs(animList) do
     end)
 end
 
--- Cập nhật kích thước chiều cao cuộn tổng thể
 scroll.CanvasSize = UDim2.new(0, 0, 0, currentY + 20)
 
--- Logic Nút thu nhỏ (-)
 minBtn.MouseButton1Click:Connect(function()
     local isOpen = scroll.Visible
     scroll.Visible = not isOpen
@@ -448,4 +572,4 @@ minBtn.MouseButton1Click:Connect(function()
     minBtn.Text = isOpen and "+" or "-"
 end)
 
-print("🎉 Khởi chạy thành công tp.lua tích hợp đầy đủ Animation Kurdish!")
+print("🎉 Khởi chạy thành công tp.lua hoàn chỉnh tích hợp Fly GUI V4!")
