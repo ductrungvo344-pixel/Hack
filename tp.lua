@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT CHÍNH TỔNG HỢP (tp.lua) - KHÔNG GHI ĐÈ VỊ TRÍ KHI TP LIÊN TỤC
+-- SCRIPT CHÍNH TỔNG HỢP (tp.lua) - ĐÃ FIX LỖI ANIMATION KHI RESPAWN
 -- =================================================================
 print("⏳ Đang khởi chạy tp.lua...")
 
@@ -164,18 +164,17 @@ end
 
 local currentY = 2
 
--- 1. TELEPORT SECTION (KHÔNG LƯU ĐÈ VỊ TRÍ KHI TP QUA LẠI)
+-- 1. TELEPORT SECTION
 createSubLabel("⚡ HỆ THỐNG TELEPORT", currentY)
 currentY = currentY + 20
 
 local oldPosition = nil
-local isTeleported = false -- Cờ kiểm tra xem đang ở trạng thái đã TP hay chưa
+local isTeleported = false
 
 local function executeTeleport(targetCFrame)
     local character = localPlayer.Character
     local rootPart = character and character:FindFirstChild("HumanoidRootPart")
     if rootPart then
-        -- Nếu chưa TP lần nào, lưu lại vị trí gốc hiện tại
         if not isTeleported then
             oldPosition = rootPart.CFrame
             isTeleported = true
@@ -224,7 +223,6 @@ backBtn.MouseButton1Click:Connect(function()
             rootPart.CFrame = oldPosition
             task.wait(0.2)
             rootPart.Anchored = false
-            -- Reset lại trạng thái để lần TP sau tiếp tục lưu đúng điểm xuất phát mới
             oldPosition = nil
             isTeleported = false
         end
@@ -327,67 +325,94 @@ adminBtn.MouseButton1Click:Connect(function()
     pcall(function() loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Nameless-Admin-23304"))() end)
 end)
 
--- 5. KURDISH ANIMATIONS SECTION
-local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
-local isR15 = (humanoid.RigType == Enum.HumanoidRigType.R15)
-
-createSubLabel(isR15 and "💃 ANIMATIONS (R15)" or "💃 ANIMATIONS (R6)", currentY)
+-- 5. KURDISH ANIMATIONS SECTION (ĐÃ FIX KHI RESPAWN)
+local animSectionLabel = createSubLabel("💃 ANIMATIONS", currentY)
 currentY = currentY + 20
 
-local animList = {}
-if not isR15 then
-    animList = {
-        {"Head Throw", "35154961", true, 1}, {"Floating Head", "121572214", false, 1},
-        {"Crouch", "182724289", false, 1}, {"Floor Crawl", "282574440", false, 1},
-        {"Dino Walk", "204328711", false, 1}, {"Jumping Jacks", "429681631", false, 1},
-        {"Hero Jump", "184574340", true, 1}, {"Faint", "181526230", false, 1},
-        {"Dab", "183412246", true, 1}, {"Spinner", "188632011", true, 2},
-        {"Spin Dance", "429730430", true, 1}, {"Moon Dance", "45834924", true, 1}
-    }
-else
-    animList = {
-        {"Crazy Slash", "674871189", true, 1}, {"Open", "582855105", true, 1},
-        {"R15 Spinner", "754658275", true, 1}, {"Arms Out", "582384156", true, 1},
-        {"Float Slash", "717879555", true, 1}, {"Fling Arms", "754656200", true, 10}
-    }
-end
+local activeTracks = {}
+local animButtons = {}
 
-local normalColor = isR15 and Color3.fromRGB(110, 115, 140) or Color3.fromRGB(180, 140, 60)
-local activeColor = isR15 and Color3.fromRGB(140, 160, 220) or Color3.fromRGB(230, 180, 70)
+local function setupAnimations(character)
+    local humanoid = character:WaitForChild("Humanoid")
+    local isR15 = (humanoid.RigType == Enum.HumanoidRigType.R15)
+    
+    animSectionLabel.Text = isR15 and "💃 ANIMATIONS (R15)" or "💃 ANIMATIONS (R6)"
+    
+    local animList = {}
+    if not isR15 then
+        animList = {
+            {"Head Throw", "35154961", true, 1}, {"Floating Head", "121572214", false, 1},
+            {"Crouch", "182724289", false, 1}, {"Floor Crawl", "282574440", false, 1},
+            {"Dino Walk", "204328711", false, 1}, {"Jumping Jacks", "429681631", false, 1},
+            {"Hero Jump", "184574340", true, 1}, {"Faint", "181526230", false, 1},
+            {"Dab", "183412246", true, 1}, {"Spinner", "188632011", true, 2},
+            {"Spin Dance", "429730430", true, 1}, {"Moon Dance", "45834924", true, 1}
+        }
+    else
+        animList = {
+            {"Crazy Slash", "674871189", true, 1}, {"Open", "582855105", true, 1},
+            {"R15 Spinner", "754658275", true, 1}, {"Arms Out", "582384156", true, 1},
+            {"Float Slash", "717879555", true, 1}, {"Fling Arms", "754656200", true, 10}
+        }
+    end
 
-for _, animData in ipairs(animList) do
-    local animName, animId, isLoop, speed = animData[1], animData[2], animData[3], animData[4]
-    local animObj = Instance.new("Animation")
-    animObj.AnimationId = "rbxassetid://" .. animId
-    local track = humanoid:LoadAnimation(animObj)
-    
-    local btn = createButton("Anim_" .. animName, animName, currentY, normalColor)
-    currentY = currentY + 28
-    
-    local isPlaying = false
-    btn.MouseButton1Click:Connect(function()
-        isPlaying = not isPlaying
-        if isPlaying then
-            btn.BackgroundColor3 = activeColor
-            if isLoop then
-                task.spawn(function()
-                    while isPlaying do
-                        if not track.IsPlaying then track:Play(0.1, 1, speed) end
-                        task.wait()
-                    end
-                end)
+    local normalColor = isR15 and Color3.fromRGB(110, 115, 140) or Color3.fromRGB(180, 140, 60)
+    local activeColor = isR15 and Color3.fromRGB(140, 160, 220) or Color3.fromRGB(230, 180, 70)
+
+    -- Xóa các nút cũ nếu respawn để vẽ lại chính xác
+    for _, btn in pairs(animButtons) do
+        btn:Destroy()
+    end
+    animButtons = {}
+    activeTracks = {}
+
+    local startY = currentY
+    for _, animData in ipairs(animList) do
+        local animName, animId, isLoop, speed = animData[1], animData[2], animData[3], animData[4]
+        
+        local animObj = Instance.new("Animation")
+        animObj.AnimationId = "rbxassetid://" .. animId
+        local track = humanoid:LoadAnimation(animObj)
+        
+        local btn = createButton("Anim_" .. animName, animName, startY, normalColor)
+        table.insert(animButtons, btn)
+        startY = startY + 28
+        
+        local isPlaying = false
+        btn.MouseButton1Click:Connect(function()
+            isPlaying = not isPlaying
+            if isPlaying then
+                btn.BackgroundColor3 = activeColor
+                if isLoop then
+                    task.spawn(function()
+                        while isPlaying and humanoid.Health > 0 do
+                            if not track.IsPlaying then track:Play(0.1, 1, speed) end
+                            task.wait()
+                        end
+                    end)
+                else
+                    track:Play(0.1, 1, speed)
+                end
             else
-                track:Play(0.1, 1, speed)
+                track:Stop()
+                btn.BackgroundColor3 = normalColor
             end
-        else
-            track:Stop()
-            btn.BackgroundColor3 = normalColor
-        end
-    end)
+        end)
+    end
+    
+    scroll.CanvasSize = UDim2.new(0, 0, 0, startY + 30)
 end
 
-scroll.CanvasSize = UDim2.new(0, 0, 0, currentY + 30)
+-- Khởi tạo lần đầu
+if localPlayer.Character then
+    setupAnimations(localPlayer.Character)
+end
+
+-- Tự động gán lại Animation khi nhân vật Respawn
+localPlayer.CharacterAdded:Connect(function(char)
+    task.wait(0.5)
+    setupAnimations(char)
+end)
 
 minBtn.MouseButton1Click:Connect(function()
     local isOpen = scroll.Visible
@@ -396,4 +421,4 @@ minBtn.MouseButton1Click:Connect(function()
     minBtn.Text = isOpen and "+" or "-"
 end)
 
-print("🎉 Khởi chạy thành công tp.lua bản chuẩn không ghi đè vị trí!")
+print("🎉 Khởi chạy thành công tp.lua (Đã fix lỗi Animation sau khi chết)!")
