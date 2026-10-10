@@ -4,7 +4,7 @@ const express = require('express');
 const http = require('http');
 const https = require('https');
 
-// 1. Khởi tạo Express và HTTP Server (Cổng ảo)
+// 1. Khởi tạo Express và HTTP Server (Cổng ảo kết hợp Proxy YouTube)
 const app = express();
 app.use(express.json());
 const server = http.createServer(app);
@@ -12,14 +12,44 @@ const server = http.createServer(app);
 const PORT = process.env.PORT || 3000;
 
 app.get('/', (req, res) => {
-    res.status(200).send('🚀 Bot Proxy, Virtual Port & HTTP Server đang hoạt động bình thường!');
+    res.status(200).send('🚀 Bot Proxy, Virtual Port & YouTube API đang hoạt động bình thường!');
+});
+
+// --- API PROXY TÌM KIẾM YOUTUBE ---
+app.get('/youtube', async (req, res) => {
+    const query = req.query.q;
+    if (!query) {
+        return res.status(400).json({ error: 'Thiếu từ khóa tìm kiếm (q)' });
+    }
+
+    try {
+        console.log(`🔍 Nhận yêu cầu tìm kiếm YouTube cho: "${query}"`);
+        const searchUrl = `https://invidious.io.lol/api/v1/search?q=${encodeURIComponent(query)}&type=video`;
+        const response = await axios.get(searchUrl, { timeout: 8000 });
+        
+        if (response.data && Array.isArray(response.data)) {
+            const videos = response.data.slice(0, 5).map(item => ({
+                title: item.title,
+                videoId: item.videoId,
+                author: item.author,
+                duration: item.lengthSeconds || 0,
+                thumbnail: `https://img.youtube.com/vi/${item.videoId}/hqdefault.jpg`
+            }));
+            return res.json({ success: true, results: videos });
+        }
+        
+        res.status(404).json({ success: false, error: 'Không tìm thấy video phù hợp' });
+    } catch (error) {
+        console.error("❌ Lỗi Proxy YouTube:", error.message);
+        res.status(500).json({ success: false, error: 'Lỗi kết nối tới YouTube Proxy' });
+    }
 });
 
 server.listen(PORT, () => {
-    console.log(`🌐 HTTP Server & Cổng ảo đang chạy trên cổng: ${PORT}`);
+    console.log(`🌐 HTTP Server & Proxy đang chạy trên cổng: ${PORT}`);
 });
 
-// 2. Khởi tạo Discord Bot Client với đầy đủ Intents
+// 2. Khởi tạo Discord Bot Client
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -28,7 +58,6 @@ const client = new Client({
     ]
 });
 
-// Lấy Token và Channel ID từ biến môi trường
 const BOT_TOKEN = process.env.DISCORD_TOKEN;
 const TARGET_CHANNEL_ID = process.env.CHANNEL_ID;
 
@@ -80,7 +109,7 @@ async function searchAllScripts(gameName) {
     return combinedScripts;
 }
 
-// 4. Xử lý sự kiện khi có tin nhắn hoặc Webhook gửi vào kênh
+// 4. Xử lý sự kiện khi có Webhook / Tin nhắn gửi vào kênh
 client.on('messageCreate', async (message) => {
     if (message.channelId !== TARGET_CHANNEL_ID) return;
     if (message.author.id === client.user.id) return;
