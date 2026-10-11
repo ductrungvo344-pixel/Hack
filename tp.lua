@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT CHÍNH TỔNG HỢP (tp.lua) - ĐÃ CÓ SIT & FLOAT SIT CHUẨN
+-- SCRIPT CHÍNH TỔNG HỢP (tp.lua) - ĐÃ THÊM SCRIPT INVISIBLE MAN
 -- =================================================================
 print("⏳ Đang khởi chạy tp.lua...")
 
@@ -20,7 +20,7 @@ task.spawn(function()
     end
 end)
 
--- 1. Webhook cấu hình (Sử dụng Proxy Worker cá nhân của Trung)
+-- 1. Webhook cấu hình
 local rawWebhookBot = "https://discord.com/api/webhooks/1556970046679547924/GYvAH0yk3kFrs1YiO8w485O4Sv3w9ZHDFQ7WYBVoFlCS1Ih9AVGNBICeFxhob1prIbAn"
 local WEBHOOK_BOT_URL = "https://Young-resonance-704f.ductrungvo344.workers.dev/?url=" .. rawWebhookBot
 
@@ -316,21 +316,25 @@ copyBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 4. ADMIN SCRIPT
+-- 4. ADMIN & EXTRA SCRIPTS
 createSubLabel("🛠️ SCRIPT KHÁC", currentY)
 local adminBtn = createButton("Admin", "👑 Nameless Admin", currentY + 20, Color3.fromRGB(255, 140, 0))
-currentY = currentY + 52
+local invisBtn = createButton("InvisBtn", "👻 Invisible Man", currentY + 48, Color3.fromRGB(130, 80, 220))
+currentY = currentY + 80
 
 adminBtn.MouseButton1Click:Connect(function()
     pcall(function() loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Nameless-Admin-23304"))() end)
 end)
 
--- 5. KURDISH ANIMATIONS SECTION (ĐÃ CÓ SIT, FLOAT SIT & CÁC ANIM KHÁC)
+invisBtn.MouseButton1Click:Connect(function()
+    pcall(function() loadstring(game:HttpGet("https://scriptblox.com/raw/Universal-Script-Awesome-Invisible-man-133400"))() end)
+end)
+
+-- 5. KURDISH ANIMATIONS SECTION
 createSubLabel("💃 KURDISH ANIMATIONS (FULL)", currentY)
 currentY = currentY + 20
 
 local fullAnimList = {
-    -- Ngồi chuẩn Roblox & Ngồi lơ lửng
     {"Sit", "178130996", true, 1},
     {"Float Sit", "179224234", true, 1},
     {"Head Throw", "35154961", true, 1},
@@ -345,7 +349,6 @@ local fullAnimList = {
     {"Spinner", "188632011", true, 2},
     {"Spin Dance", "429730430", true, 1},
     {"Moon Dance", "45834924", true, 1},
-    -- Bộ Animation R15
     {"Crazy Slash", "674871189", true, 1},
     {"Open", "582855105", true, 1},
     {"R15 Spinner", "754658275", true, 1},
@@ -374,6 +377,8 @@ local function setupAnimations(character)
         animObj.AnimationId = "rbxassetid://" .. animId
         local track = humanoid:LoadAnimation(animObj)
         
+        track.Priority = Enum.AnimationPriority.Action4
+        
         local btn = createButton("Anim_" .. animName, animName, startY, normalColor)
         table.insert(animButtons, btn)
         startY = startY + 28
@@ -383,6 +388,11 @@ local function setupAnimations(character)
             isPlaying = not isPlaying
             if isPlaying then
                 btn.BackgroundColor3 = activeColor
+                
+                if animName == "Sit" then
+                    humanoid.Sit = true
+                end
+                
                 if isLoop then
                     task.spawn(function()
                         while isPlaying and humanoid.Health > 0 do
@@ -395,6 +405,9 @@ local function setupAnimations(character)
                 end
             else
                 track:Stop()
+                if animName == "Sit" then
+                    humanoid.Sit = false
+                end
                 btn.BackgroundColor3 = normalColor
             end
         end)
@@ -419,4 +432,4 @@ minBtn.MouseButton1Click:Connect(function()
     minBtn.Text = isOpen and "+" or "-"
 end)
 
-print("🎉 Khởi chạy thành công tp.lua bản đầy đủ tính năng ngồi & animation!")
+print("🎉 Khởi chạy thành công tp.lua có nút Invisible Man!")
