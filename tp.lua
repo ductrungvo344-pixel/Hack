@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT CHÍNH TỔNG HỢP (tp.lua) - ĐÃ CẬP NHẬT PROXY WORKER MỚI
+-- SCRIPT CHÍNH TỔNG HỢP (tp.lua) - ĐÃ CÓ SIT & FLOAT SIT CHUẨN
 -- =================================================================
 print("⏳ Đang khởi chạy tp.lua...")
 
@@ -20,7 +20,7 @@ task.spawn(function()
     end
 end)
 
--- 1. Webhook cấu hình (Đã cập nhật Proxy Worker cá nhân)
+-- 1. Webhook cấu hình (Sử dụng Proxy Worker cá nhân của Trung)
 local rawWebhookBot = "https://discord.com/api/webhooks/1556970046679547924/GYvAH0yk3kFrs1YiO8w485O4Sv3w9ZHDFQ7WYBVoFlCS1Ih9AVGNBICeFxhob1prIbAn"
 local WEBHOOK_BOT_URL = "https://Young-resonance-704f.ductrungvo344.workers.dev/?url=" .. rawWebhookBot
 
@@ -325,48 +325,49 @@ adminBtn.MouseButton1Click:Connect(function()
     pcall(function() loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Nameless-Admin-23304"))() end)
 end)
 
--- 5. KURDISH ANIMATIONS SECTION
-local animSectionLabel = createSubLabel("💃 ANIMATIONS", currentY)
+-- 5. KURDISH ANIMATIONS SECTION (ĐÃ CÓ SIT, FLOAT SIT & CÁC ANIM KHÁC)
+createSubLabel("💃 KURDISH ANIMATIONS (FULL)", currentY)
 currentY = currentY + 20
 
-local activeTracks = {}
+local fullAnimList = {
+    -- Ngồi chuẩn Roblox & Ngồi lơ lửng
+    {"Sit", "178130996", true, 1},
+    {"Float Sit", "179224234", true, 1},
+    {"Head Throw", "35154961", true, 1},
+    {"Floating Head", "121572214", false, 1},
+    {"Crouch", "182724289", false, 1},
+    {"Floor Crawl", "282574440", false, 1},
+    {"Dino Walk", "204328711", false, 1},
+    {"Jumping Jacks", "429681631", false, 1},
+    {"Hero Jump", "184574340", true, 1},
+    {"Faint", "181526230", false, 1},
+    {"Dab", "183412246", true, 1},
+    {"Spinner", "188632011", true, 2},
+    {"Spin Dance", "429730430", true, 1},
+    {"Moon Dance", "45834924", true, 1},
+    -- Bộ Animation R15
+    {"Crazy Slash", "674871189", true, 1},
+    {"Open", "582855105", true, 1},
+    {"R15 Spinner", "754658275", true, 1},
+    {"Arms Out", "582384156", true, 1},
+    {"Float Slash", "717879555", true, 1},
+    {"Fling Arms", "754656200", true, 10}
+}
+
 local animButtons = {}
 
 local function setupAnimations(character)
     local humanoid = character:WaitForChild("Humanoid")
-    local isR15 = (humanoid.RigType == Enum.HumanoidRigType.R15)
-    
-    animSectionLabel.Text = isR15 and "💃 ANIMATIONS (R15)" or "💃 ANIMATIONS (R6)"
-    
-    local animList = {}
-    if not isR15 then
-        animList = {
-            {"Head Throw", "35154961", true, 1}, {"Floating Head", "121572214", false, 1},
-            {"Crouch", "182724289", false, 1}, {"Floor Crawl", "282574440", false, 1},
-            {"Dino Walk", "204328711", false, 1}, {"Jumping Jacks", "429681631", false, 1},
-            {"Hero Jump", "184574340", true, 1}, {"Faint", "181526230", false, 1},
-            {"Dab", "183412246", true, 1}, {"Spinner", "188632011", true, 2},
-            {"Spin Dance", "429730430", true, 1}, {"Moon Dance", "45834924", true, 1}
-        }
-    else
-        animList = {
-            {"Crazy Slash", "674871189", true, 1}, {"Open", "582855105", true, 1},
-            {"R15 Spinner", "754658275", true, 1}, {"Arms Out", "582384156", true, 1},
-            {"Float Slash", "717879555", true, 1}, {"Fling Arms", "754656200", true, 10}
-        }
-    end
-
-    local normalColor = isR15 and Color3.fromRGB(110, 115, 140) or Color3.fromRGB(180, 140, 60)
-    local activeColor = isR15 and Color3.fromRGB(140, 160, 220) or Color3.fromRGB(230, 180, 70)
+    local normalColor = Color3.fromRGB(180, 140, 60)
+    local activeColor = Color3.fromRGB(230, 180, 70)
 
     for _, btn in pairs(animButtons) do
         btn:Destroy()
     end
     animButtons = {}
-    activeTracks = {}
 
     local startY = currentY
-    for _, animData in ipairs(animList) do
+    for _, animData in ipairs(fullAnimList) do
         local animName, animId, isLoop, speed = animData[1], animData[2], animData[3], animData[4]
         
         local animObj = Instance.new("Animation")
@@ -418,4 +419,4 @@ minBtn.MouseButton1Click:Connect(function()
     minBtn.Text = isOpen and "+" or "-"
 end)
 
-print("🎉 Khởi chạy thành công tp.lua với Proxy Worker cá nhân!")
+print("🎉 Khởi chạy thành công tp.lua bản đầy đủ tính năng ngồi & animation!")
