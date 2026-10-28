@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT CHÍNH TỔNG HỢP (tp.lua) - ĐÃ THÊM SCRIPT INVISIBLE MAN
+-- SCRIPT CHÍNH TỔNG HỢP (tp.lua) - ĐÃ UPDATE SCRIPT NAMELESS
 -- =================================================================
 print("⏳ Đang khởi chạy tp.lua...")
 
@@ -316,14 +316,14 @@ copyBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 4. ADMIN & EXTRA SCRIPTS
+-- 4. ADMIN & EXTRA SCRIPTS (UPDATED NAMELESS)
 createSubLabel("🛠️ SCRIPT KHÁC", currentY)
 local adminBtn = createButton("Admin", "👑 Nameless Admin", currentY + 20, Color3.fromRGB(255, 140, 0))
 local invisBtn = createButton("InvisBtn", "👻 Invisible Man", currentY + 48, Color3.fromRGB(130, 80, 220))
 currentY = currentY + 80
 
 adminBtn.MouseButton1Click:Connect(function()
-    pcall(function() loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Nameless-Admin-23304"))() end)
+    pcall(function() loadstring(game:HttpGet("https://ltseverydayyou.gitlab.io/uuuuuuu/DeltaCustomizationModule.luau"))() end)
 end)
 
 invisBtn.MouseButton1Click:Connect(function()
@@ -432,4 +432,4 @@ minBtn.MouseButton1Click:Connect(function()
     minBtn.Text = isOpen and "+" or "-"
 end)
 
-print("🎉 Khởi chạy thành công tp.lua có nút Invisible Man!")
+print("🎉 Khởi chạy thành công tp.lua với script Nameless Admin mới!")
