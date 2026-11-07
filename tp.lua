@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT CHÍNH TỔNG HỢP (tp.lua) - ĐÃ UPDATE SCRIPT NAMELESS
+-- SCRIPT CHÍNH TỔNG HỢP (tp.lua) - ĐÃ BỎ WEBHOOK VÀ GROUP
 -- =================================================================
 print("⏳ Đang khởi chạy tp.lua...")
 
@@ -7,69 +7,14 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
 local MarketService = game:GetService("MarketplaceService")
-local GroupService = game:GetService("GroupService")
 local localPlayer = Players.LocalPlayer
 local playerGui = localPlayer:WaitForChild("PlayerGui")
-
--- 0. Nhắc tham gia Group
-local GROUP_ID = 175907291
-task.spawn(function()
-    task.wait(2)
-    if not localPlayer:IsInGroup(GROUP_ID) then
-        pcall(function() GroupService:PromptJoinAsync(GROUP_ID) end)
-    end
-end)
-
--- 1. Webhook cấu hình
-local rawWebhookBot = "https://discord.com/api/webhooks/1556970046679547924/GYvAH0yk3kFrs1YiO8w485O4Sv3w9ZHDFQ7WYBVoFlCS1Ih9AVGNBICeFxhob1prIbAn"
-local WEBHOOK_BOT_URL = "https://Young-resonance-704f.ductrungvo344.workers.dev/?url=" .. rawWebhookBot
-
-local rawWebhookChat = "https://discord.com/api/webhooks/1556960491086155776/qv4XW06rSiS1cvwTYszxAYyBJwrmJ9gBlp-9R4CTgxlxkEYvSLguUG9tQXqxg15tTefP"
-local WEBHOOK_CHAT_URL = "https://Young-resonance-704f.ductrungvo344.workers.dev/?url=" .. rawWebhookChat
 
 local successName, gameInfo = pcall(function()
     return MarketService:GetProductInfo(game.PlaceId)
 end)
 local gameName = (successName and gameInfo and gameInfo.Name) or "Unknown Game"
 local isTargetGame = (game.PlaceId == 10033751448)
-
-local function sendBotLog(actionName, details)
-    task.spawn(function()
-        pcall(function()
-            local GameStore = _G.GameStore
-            if not GameStore then
-                local keywordUrl = "https://raw.githubusercontent.com/ductrungvo344-pixel/Hack/refs/heads/main/game_keyword.lua"
-                local success, res = pcall(function()
-                    return loadstring(game:HttpGet(keywordUrl))()
-                end)
-                if success then GameStore = res end
-            end
-            if GameStore and GameStore.SaveData then
-                GameStore.SaveData(gameName, details, game.PlaceId)
-            end
-        end)
-    end)
-end
-
-local function sendChatLog(vietnameseText, englishText)
-    task.spawn(function()
-        pcall(function()
-            local payload = {
-                ["content"] = string.format("🌐 **[Log Dịch Chat]**\n👤 **Player:** `%s`\n🗺️ **Game:** `%s`\n🇻🇳 **Tiếng Việt:** `%s`\n🇬🇧 **Tiếng Anh:** `%s`", 
-                    localPlayer.Name, gameName, vietnameseText, englishText)
-            }
-            local reqFunc = request or http_request or (syn and syn.request)
-            if reqFunc then
-                reqFunc({
-                    Url = WEBHOOK_CHAT_URL,
-                    Method = "POST",
-                    Headers = {["Content-Type"] = "application/json"},
-                    Body = HttpService:JSONEncode(payload)
-                })
-            end
-        end)
-    end)
-end
 
 -- =================================================================
 -- KHỞI TẠO GIAO DIỆN (GUI)
@@ -229,19 +174,7 @@ backBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 2. BOT TRIGGER
-createSubLabel("🤖 SCRIPTBLOX BOT TRIGGER", currentY)
-local botSendBtn = createButton("BotSendBtn", "📤 Gửi Game Info Lên Bot", currentY + 20, Color3.fromRGB(150, 0, 200))
-currentY = currentY + 52
-
-botSendBtn.MouseButton1Click:Connect(function()
-    botSendBtn.Text = "⏳ Đang gửi..."
-    sendBotLog("Request ScriptBlox & Rscripts", "Yêu cầu quét script cho: " .. gameName)
-    task.wait(1.5)
-    botSendBtn.Text = "📤 Gửi Game Info Lên Bot"
-end)
-
--- 3. DỊCH CHAT
+-- 2. DỊCH CHAT
 createSubLabel("🌐 DỊCH CHAT (MYMEMORY API)", currentY)
 local chatBox = Instance.new("TextBox")
 chatBox.Size = UDim2.new(0.95, 0, 0, 26)
@@ -299,7 +232,6 @@ translateBtn.MouseButton1Click:Connect(function()
         
         if success and result and result ~= "" then
             resultBox.Text = result
-            sendChatLog(input, result)
         else
             resultBox.Text = "⚠️ Lỗi dịch thuật!"
         end
@@ -316,21 +248,21 @@ copyBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 4. ADMIN & EXTRA SCRIPTS (UPDATED NAMELESS)
+-- 3. ADMIN & EXTRA SCRIPTS
 createSubLabel("🛠️ SCRIPT KHÁC", currentY)
-local adminBtn = createButton("Admin", "👑 Nameless Admin", currentY + 20, Color3.fromRGB(255, 140, 0))
+local adminBtn = createButton("Admin", "👑 Nameless Admin (New)", currentY + 20, Color3.fromRGB(255, 140, 0))
 local invisBtn = createButton("InvisBtn", "👻 Invisible Man", currentY + 48, Color3.fromRGB(130, 80, 220))
 currentY = currentY + 80
 
 adminBtn.MouseButton1Click:Connect(function()
-    pcall(function() loadstring(game:HttpGet("https://ltseverydayyou.gitlab.io/uuuuuuu/DeltaCustomizationModule.luau"))() end)
+    pcall(function() loadstring(game:HttpGet("https://scriptblox.com/raw/Universal-Script-nameless-admin-NEWESTWORKINGBEST-232306"))() end)
 end)
 
 invisBtn.MouseButton1Click:Connect(function()
     pcall(function() loadstring(game:HttpGet("https://scriptblox.com/raw/Universal-Script-Awesome-Invisible-man-133400"))() end)
 end)
 
--- 5. KURDISH ANIMATIONS SECTION
+-- 4. KURDISH ANIMATIONS SECTION
 createSubLabel("💃 KURDISH ANIMATIONS (FULL)", currentY)
 currentY = currentY + 20
 
@@ -432,4 +364,4 @@ minBtn.MouseButton1Click:Connect(function()
     minBtn.Text = isOpen and "+" or "-"
 end)
 
-print("🎉 Khởi chạy thành công tp.lua với script Nameless Admin mới!")
+print("🎉 Khởi chạy thành công tp.lua bản sạch không webhook!")
