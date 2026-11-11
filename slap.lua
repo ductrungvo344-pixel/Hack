@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT SLAP.LUA - AUTO GRAB ALL PLAYER (CHECK HUGBUTTONS TỰ ĐỘNG)
+-- SCRIPT SLAP.LUA - AUTO KILL ALL (TP BỤC + GRAB & THẢ + QUAY VỀ VỊ TRÍ CŨ KHI TẮT)
 -- =================================================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -20,8 +20,8 @@ screenGui.Parent = playerGui
 
 -- Tạo khung chính
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 240, 0, 510)
-frame.Position = UDim2.new(0.72, 0, 0.12, 0)
+frame.Size = UDim2.new(0, 240, 0, 545)
+frame.Position = UDim2.new(0.72, 0, 0.1, 0)
 frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 frame.BorderSizePixel = 0
 frame.Active = true
@@ -37,7 +37,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 30)
 title.Position = UDim2.new(0, 0, 0, 0)
 title.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-title.Text = "  👀 DÒ SAU & GRAB MENU"
+title.Text = "  👀 DÒ SAU & KILL ALL MENU"
 title.TextColor3 = Color3.fromRGB(255, 215, 0)
 title.TextSize = 11
 title.Font = Enum.Font.GothamBold
@@ -172,29 +172,14 @@ local btnCorner5 = Instance.new("UICorner")
 btnCorner5.CornerRadius = UDim.new(0, 6)
 btnCorner5.Parent = toggleFastCaseBtn
 
--- 6. NÚT AUTO KILL PLAYER
-local toggleKillPlayerBtn = Instance.new("TextButton")
-toggleKillPlayerBtn.Size = UDim2.new(0.9, 0, 0, 26)
-toggleKillPlayerBtn.Position = UDim2.new(0.05, 0, 0, 212)
-toggleKillPlayerBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
-toggleKillPlayerBtn.Text = "⚔️ Auto Kill Player: TẮT"
-toggleKillPlayerBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-toggleKillPlayerBtn.TextSize = 11
-toggleKillPlayerBtn.Font = Enum.Font.GothamBold
-toggleKillPlayerBtn.Parent = contentContainer
-
-local btnCorner6 = Instance.new("UICorner")
-btnCorner6.CornerRadius = UDim.new(0, 6)
-btnCorner6.Parent = toggleKillPlayerBtn
-
 -- =================================================================
--- PHẦN GRAB PLAYER & AUTO GRAB ALL
+-- PHẦN GRAB & AUTO KILL ALL SECTION
 -- =================================================================
 local grabTitle = Instance.new("TextLabel")
 grabTitle.Size = UDim2.new(0.9, 0, 0, 18)
-grabTitle.Position = UDim2.new(0.05, 0, 0, 245)
+grabTitle.Position = UDim2.new(0.05, 0, 0, 215)
 grabTitle.BackgroundTransparency = 1
-grabTitle.Text = "🪝 HỆ THỐNG GRAB PLAYER:"
+grabTitle.Text = "🪝 HỆ THỐNG GRAB & KILL ALL:"
 grabTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
 grabTitle.TextSize = 10
 grabTitle.Font = Enum.Font.GothamBold
@@ -204,7 +189,7 @@ grabTitle.Parent = contentContainer
 -- Ô nhập tên Player chọn riêng
 local playerInputBox = Instance.new("TextBox")
 playerInputBox.Size = UDim2.new(0.9, 0, 0, 24)
-playerInputBox.Position = UDim2.new(0.05, 0, 0, 265)
+playerInputBox.Position = UDim2.new(0.05, 0, 0, 235)
 playerInputBox.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 playerInputBox.Text = ""
 playerInputBox.PlaceholderText = "Nhập tên Player cần Grab..."
@@ -221,7 +206,7 @@ boxCornerGrab.Parent = playerInputBox
 -- Nút Grab Đơn Player Đã Chọn
 local grabBtn = Instance.new("TextButton")
 grabBtn.Size = UDim2.new(0.43, 0, 0, 26)
-grabBtn.Position = UDim2.new(0.05, 0, 0, 295)
+grabBtn.Position = UDim2.new(0.05, 0, 0, 265)
 grabBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
 grabBtn.Text = "🪝 Grab Người Này"
 grabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -233,10 +218,10 @@ local btnCornerG1 = Instance.new("UICorner")
 btnCornerG1.CornerRadius = UDim.new(0, 6)
 btnCornerG1.Parent = grabBtn
 
--- NÚT AUTO GRAB ALL (GRAB TOÀN BỘ SERVER)
+-- Nút Auto Grab All
 local autoGrabAllBtn = Instance.new("TextButton")
 autoGrabAllBtn.Size = UDim2.new(0.43, 0, 0, 26)
-autoGrabAllBtn.Position = UDim2.new(0.52, 0, 0, 295)
+autoGrabAllBtn.Position = UDim2.new(0.52, 0, 0, 265)
 autoGrabAllBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
 autoGrabAllBtn.Text = "🤖 Auto Grab ALL: TẮT"
 autoGrabAllBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -248,10 +233,25 @@ local btnCornerG2 = Instance.new("UICorner")
 btnCornerG2.CornerRadius = UDim.new(0, 6)
 btnCornerG2.Parent = autoGrabAllBtn
 
+-- NÚT AUTO KILL ALL (TP BỤC + GRAB & THẢ + VỀ VỊ TRÍ CŨ KHI TẮT)
+local autoKillAllBtn = Instance.new("TextButton")
+autoKillAllBtn.Size = UDim2.new(0.9, 0, 0, 28)
+autoKillAllBtn.Position = UDim2.new(0.05, 0, 0, 298)
+autoKillAllBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+autoKillAllBtn.Text = "⚔️ Auto Kill All (TP Bục + Grab & Thả): TẮT"
+autoKillAllBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+autoKillAllBtn.TextSize = 10
+autoKillAllBtn.Font = Enum.Font.GothamBold
+autoKillAllBtn.Parent = contentContainer
+
+local btnCornerKillAll = Instance.new("UICorner")
+btnCornerKillAll.CornerRadius = UDim.new(0, 6)
+btnCornerKillAll.Parent = autoKillAllBtn
+
 -- Thông báo trạng thái chi tiết
 local infoStatusLabel = Instance.new("TextLabel")
 infoStatusLabel.Size = UDim2.new(0.9, 0, 0, 75)
-infoStatusLabel.Position = UDim2.new(0.05, 0, 0, 330)
+infoStatusLabel.Position = UDim2.new(0.05, 0, 0, 335)
 infoStatusLabel.BackgroundTransparency = 1
 infoStatusLabel.Text = "Trạng thái: Sẵn sàng"
 infoStatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -274,7 +274,7 @@ minimizeBtn.MouseButton1Click:Connect(function()
         end
     else
         minimizeBtn.Text = "-"
-        frame.Size = UDim2.new(0, 240, 0, 510)
+        frame.Size = UDim2.new(0, 240, 0, 545)
         for _, child in ipairs(contentContainer:GetChildren()) do
             if child:IsA("GuiObject") then
                 child.Visible = true
@@ -290,8 +290,10 @@ local isAutoSlapRunning = false
 local isAutoGuessRunning = false
 local isAutoMeterRunning = false
 local isFastCaseRunning = false
-local isKillPlayerRunning = false
 local isAutoGrabAllRunning = false
+local isAutoKillAllRunning = false
+
+local originalPosition = nil -- Lưu vị trí cũ trước khi TP đến bục
 
 local detectedPlayerName = nil
 local lastGuessFiredTime = 0
@@ -305,10 +307,35 @@ local openCaseRemote = ReplicatedStorage:FindFirstChild("Remotes")
 local hugRequestRemote = ReplicatedStorage:FindFirstChild("HugRemotes") 
     and ReplicatedStorage.HugRemotes:FindFirstChild("HugRequest")
 
--- HÀM CHECK HUGBUTTONS XEM CÓ ĐANG HIỂN THỊ KHÔNG
-local function isHugButtonsVisible()
+-- HÀM TẠO BỤC DƯỚI CHÂN TẠI (-3.050, -54.182, 98.073)
+local platformPart = nil
+local function createPlatform()
+    if platformPart then pcall(function() platformPart:Destroy() end) end
+    platformPart = Instance.new("Part")
+    platformPart.Size = Vector3.new(12, 1, 12)
+    platformPart.Position = Vector3.new(-3.050, -54.182 - 3, 98.073)
+    platformPart.Anchored = true
+    platformPart.CanCollide = true
+    platformPart.Transparency = 0.3
+    platformPart.BrickColor = BrickColor.new("Bright blue")
+    platformPart.Parent = workspace
+end
+
+local function removePlatform()
+    if platformPart then
+        pcall(function() platformPart:Destroy() end)
+        platformPart = nil
+    end
+end
+
+-- HÀM CHECK HUGBUTTONS
+local function getHugButtonsGui()
     local pGui = localPlayer:FindFirstChild("PlayerGui")
-    local hugButtons = pGui and pGui:FindFirstChild("HugButtons")
+    return pGui and pGui:FindFirstChild("HugButtons")
+end
+
+local function isHugButtonsVisible()
+    local hugButtons = getHugButtonsGui()
     if hugButtons then
         if hugButtons:IsA("GuiObject") and hugButtons.Visible and hugButtons.AbsoluteSize.X > 0 then
             return true
@@ -322,17 +349,38 @@ local function isHugButtonsVisible()
     return false
 end
 
--- HÀM THỰC THI GRAB MỘT NGƯỜI CHƠI
-local function grabTargetChar(targetChar)
-    if not targetChar then return false end
-    return pcall(function()
-        if hugRequestRemote then
-            hugRequestRemote:FireServer("tryGrab", targetChar)
+-- HÀM KÍCH HOẠT NÚT THẢ TRONG HUGBUTTONS
+local function triggerReleaseButton()
+    pcall(function()
+        local hugButtons = getHugButtonsGui()
+        if hugButtons then
+            for _, btn in ipairs(hugButtons:GetDescendants()) do
+                if (btn:IsA("TextButton") or btn:IsA("ImageButton")) and btn.Visible then
+                    if getconnections then
+                        for _, conn in pairs(getconnections(btn.MouseButton1Click)) do conn:Fire() end
+                        for _, conn in pairs(getconnections(btn.Activated)) do conn:Fire() end
+                    else
+                        btn:Activate()
+                    end
+                end
+            end
         end
     end)
 end
 
--- NÚT GRAB ĐƠN PLAYER THEO TÊN
+-- HÀM GRAB VÀ THẢ
+local function grabAndReleaseTarget(targetChar)
+    if not targetChar then return false end
+    return pcall(function()
+        if hugRequestRemote then
+            hugRequestRemote:FireServer("tryGrab", targetChar)
+            task.wait(0.4)
+            triggerReleaseButton()
+        end
+    end)
+end
+
+-- NÚT GRAB ĐƠN
 grabBtn.MouseButton1Click:Connect(function()
     local nameText = playerInputBox.Text
     local targetP = nil
@@ -346,8 +394,8 @@ grabBtn.MouseButton1Click:Connect(function()
     end
     
     if targetP and targetP.Character then
-        grabTargetChar(targetP.Character)
-        infoStatusLabel.Text = "🪝 Đã Grab: " .. targetP.Name
+        grabAndReleaseTarget(targetP.Character)
+        infoStatusLabel.Text = "🪝 Đã Grab & Thả: " + targetP.Name
         infoStatusLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
     else
         infoStatusLabel.Text = "⚠️ Vui lòng nhập tên Player hợp lệ!"
@@ -361,7 +409,7 @@ autoGrabAllBtn.MouseButton1Click:Connect(function()
     if isAutoGrabAllRunning then
         autoGrabAllBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
         autoGrabAllBtn.Text = "🤖 Auto Grab ALL: BẬT"
-        infoStatusLabel.Text = "🤖 Đang Auto Grab ALL toàn bộ server..."
+        infoStatusLabel.Text = "🤖 Đang Auto Grab ALL..."
         infoStatusLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
     else
         autoGrabAllBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
@@ -371,39 +419,123 @@ autoGrabAllBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- LOOP AUTO GRAB ALL (LẦN LƯỢT MỌI NGƯỜI TRONG SERVER, TẠM DỪNG KHI HUGBUTTONS HIỂN THỊ)
+-- TOGGLE AUTO KILL ALL (LƯU VỊ TRÍ CŨ -> TP BỤC -> KHI TẮT TP VỀ VỊ TRÍ CŨ)
+autoKillAllBtn.MouseButton1Click:Connect(function()
+    isAutoKillAllRunning = not isAutoKillAllRunning
+    if isAutoKillAllRunning then
+        autoKillAllBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
+        autoKillAllBtn.Text = "⚔️ Auto Kill All (TP Bục + Grab & Thả): BẬT"
+        infoStatusLabel.Text = "⚔️ Đã TP tới bục & bắt đầu Auto Kill All..."
+        infoStatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+        
+        -- Lưu lại vị trí cũ trước khi Teleport đến bục
+        pcall(function()
+            local char = localPlayer.Character
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            if root then
+                originalPosition = root.CFrame
+            end
+        end)
+        
+        createPlatform()
+        pcall(function()
+            local char = localPlayer.Character
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            if root then
+                root.CFrame = CFrame.new(-3.050, -54.182, 98.073)
+            end
+        end)
+    else
+        autoKillAllBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+        autoKillAllBtn.Text = "⚔️ Auto Kill All (TP Bục + Grab & Thả): TẮT"
+        infoStatusLabel.Text = "Đã dừng Auto Kill All. Đang về vị trí cũ..."
+        infoStatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+        
+        removePlatform()
+        
+        -- Teleport trả về vị trí cũ khi tắt
+        pcall(function()
+            if originalPosition then
+                local char = localPlayer.Character
+                local root = char and char:FindFirstChild("HumanoidRootPart")
+                if root then
+                    root.CFrame = originalPosition
+                end
+                originalPosition = nil
+            end
+        end)
+    end
+end)
+
+-- LOOP AUTO KILL ALL (TP BỤC + GRAB & THẢ LIÊN TỤC)
 task.spawn(function()
     while true do
         task.wait(0.3)
-        if isAutoGrabAllRunning then
+        if isAutoKillAllRunning then
             pcall(function()
-                -- Nếu HugButtons đang hiện thì đứng chờ cho đến khi ẩn hẳn
+                local char = localPlayer.Character
+                local root = char and char:FindFirstChild("HumanoidRootPart")
+                if root then
+                    local targetPos = Vector3.new(-3.050, -54.182, 98.073)
+                    if (root.Position - targetPos).Magnitude > 5 then
+                        root.CFrame = CFrame.new(targetPos)
+                    end
+                end
+
                 if isHugButtonsVisible() then
-                    infoStatusLabel.Text = "⏳ Đang chờ nút HugButtons ẩn đi..."
-                    infoStatusLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
+                    while isHugButtonsVisible() and isAutoKillAllRunning do
+                        task.wait(0.2)
+                    end
+                end
+
+                if isAutoKillAllRunning then
+                    for _, p in ipairs(Players:GetPlayers()) do
+                        if not isAutoKillAllRunning then break end
+                        
+                        if p ~= localPlayer and p.Character then
+                            local pHum = p.Character:FindFirstChildOfClass("Humanoid")
+                            if pHum and pHum.Health > 0 then
+                                infoStatusLabel.Text = "⚔️ Đang Kill All: " .. p.Name
+                                infoStatusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
+                                
+                                grabAndReleaseTarget(p.Character)
+                                task.wait(0.5)
+                                
+                                if isHugButtonsVisible() then
+                                    while isHugButtonsVisible() and isAutoKillAllRunning do
+                                        task.wait(0.2)
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+-- LOOP AUTO GRAB ALL THƯỜNG
+task.spawn(function()
+    while true do
+        task.wait(0.3)
+        if isAutoGrabAllRunning and not isAutoKillAllRunning then
+            pcall(function()
+                if isHugButtonsVisible() then
                     while isHugButtonsVisible() and isAutoGrabAllRunning do
                         task.wait(0.2)
                     end
                 end
 
-                -- Quét qua từng người chơi để Grab
                 if isAutoGrabAllRunning then
                     for _, p in ipairs(Players:GetPlayers()) do
                         if not isAutoGrabAllRunning then break end
-                        
                         if p ~= localPlayer and p.Character then
                             local pHum = p.Character:FindFirstChildOfClass("Humanoid")
                             if pHum and pHum.Health > 0 then
-                                infoStatusLabel.Text = "🪝 Đang Grab ALL: " .. p.Name
-                                infoStatusLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
-                                
-                                grabTargetChar(p.Character)
+                                grabAndReleaseTarget(p.Character)
                                 task.wait(0.4)
-                                
-                                -- Nếu sau khi Grab mà HugButtons hiện lên, chờ cho ẩn rồi mới sang người tiếp
                                 if isHugButtonsVisible() then
-                                    infoStatusLabel.Text = "⏳ Đang giữ nút Grab với [" .. p.Name .. "]..."
-                                    infoStatusLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
                                     while isHugButtonsVisible() and isAutoGrabAllRunning do
                                         task.wait(0.2)
                                     end
@@ -483,22 +615,6 @@ toggleFastCaseBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 6. Toggle Auto Kill Player
-toggleKillPlayerBtn.MouseButton1Click:Connect(function()
-    isKillPlayerRunning = not isKillPlayerRunning
-    if isKillPlayerRunning then
-        toggleKillPlayerBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
-        toggleKillPlayerBtn.Text = "⚔️ Auto Kill Player: BẬT"
-        infoStatusLabel.Text = "⚔️ Đang tự động TP săn toàn bộ Player..."
-        infoStatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-    else
-        toggleKillPlayerBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
-        toggleKillPlayerBtn.Text = "⚔️ Auto Kill Player: TẮT"
-        infoStatusLabel.Text = "Đã dừng Auto Kill."
-        infoStatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-    end
-end)
-
 -- LOOP AUTO QUAY HỘP FAST
 task.spawn(function()
     local args = { [1] = "frost", [2] = true }
@@ -510,59 +626,6 @@ task.spawn(function()
                     and ReplicatedStorage.Remotes:FindFirstChild("Cases") 
                     and ReplicatedStorage.Remotes.Cases:FindFirstChild("OpenCase"))
                 if remote then remote:FireServer(unpack(args)) end
-            end)
-        end
-    end
-end)
-
--- LOOP AUTO KILL PLAYER
-task.spawn(function()
-    while true do
-        task.wait(0.2)
-        if isKillPlayerRunning then
-            pcall(function()
-                local char = localPlayer.Character
-                local rootPart = char and char:FindFirstChild("HumanoidRootPart")
-                local humanoid = char and char:FindFirstChildOfClass("Humanoid")
-                
-                local mySword = char and char:FindFirstChildWhichIsA("Tool")
-                if not mySword then
-                    local backpack = localPlayer:FindFirstChildOfClass("Backpack")
-                    if backpack then
-                        for _, tool in ipairs(backpack:GetChildren()) do
-                            if tool:IsA("Tool") then
-                                if humanoid then
-                                    humanoid:EquipTool(tool)
-                                    mySword = tool
-                                    break
-                                end
-                            end
-                        end
-                    end
-                end
-
-                if rootPart then
-                    for _, p in ipairs(Players:GetPlayers()) do
-                        if p ~= localPlayer and p.Character then
-                            local pChar = p.Character
-                            local pRoot = pChar:FindFirstChild("HumanoidRootPart")
-                            local pHumanoid = pChar:FindFirstChildOfClass("Humanoid")
-                            
-                            if pRoot and pHumanoid and pHumanoid.Health > 0 then
-                                infoStatusLabel.Text = string.format("🎯 TP áp sát [%s]!", p.Name)
-                                infoStatusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
-                                
-                                rootPart.CFrame = pRoot.CFrame * CFrame.new(0, 0, 2.5)
-                                
-                                local activeTool = char and char:FindFirstChildWhichIsA("Tool")
-                                if activeTool then activeTool:Activate() end
-                                
-                                task.wait(0.3)
-                                break
-                            end
-                        end
-                    end
-                end
             end)
         end
     end
@@ -698,4 +761,4 @@ task.spawn(function()
     end
 end)
 
-print("✅ Đã chạy thành công script của Trung và Gemini, đây là lời bí mật mà tớ gửi ở console đó!")
+print("✅ Đã cập nhật xong: Tự động lưu vị trí cũ và TP trở lại vị trí cũ khi tắt Auto Kill All!")
