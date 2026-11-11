@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT LOADER CHÍNH - GAME SELECTOR MENU
+-- SCRIPT LOADER CHÍNH - GAME SELECTOR MENU (CÓ NÚT CHUYỂN US/VN)
 -- =================================================================
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
@@ -20,9 +20,9 @@ screenGui.Name = "GameLoaderGUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
--- Khung chính của Loader
+-- Khung chính của Loader (Tăng chiều cao để chứa nút ngôn ngữ)
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 260, 0, 310)
+frame.Size = UDim2.new(0, 260, 0, 345)
 frame.Position = UDim2.new(0.5, -130, 0.3, 0)
 frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 frame.BorderSizePixel = 0
@@ -98,12 +98,12 @@ local hugBtnCorner = Instance.new("UICorner")
 hugBtnCorner.CornerRadius = UDim.new(0, 6)
 hugBtnCorner.Parent = loadHugBtn
 
--- Ghi chú Hug Tower (Có Anh/Việt & US/VN)
+-- Ghi chú Hug Tower
 local hugNote = Instance.new("TextLabel")
 hugNote.Size = UDim2.new(0.9, 0, 0, 55)
 hugNote.Position = UDim2.new(0.05, 0, 0, 96)
 hugNote.BackgroundTransparency = 1
-hugNote.Text = "📌 Note: Supports US/VN toggle!\n⚠️ Auto Kill All will NOT auto-release because of a bug. Please press the release button manually."
+hugNote.Text = "📌 Note: Auto Kill All will NOT auto-release because of a bug. Please press the release button manually."
 hugNote.TextColor3 = Color3.fromRGB(200, 200, 200)
 hugNote.TextSize = 9
 hugNote.Font = Enum.Font.Gotham
@@ -147,12 +147,12 @@ local slapBtnCorner = Instance.new("UICorner")
 slapBtnCorner.CornerRadius = UDim.new(0, 6)
 slapBtnCorner.Parent = loadSlapBtn
 
--- Ghi chú Slapper (Đã dịch sang tiếng Anh cho chuẩn, kèm US/VN)
+-- Ghi chú Slapper
 local slapNote = Instance.new("TextLabel")
 slapNote.Size = UDim2.new(0.9, 0, 0, 55)
 slapNote.Position = UDim2.new(0.05, 0, 0, 218)
 slapNote.BackgroundTransparency = 1
-slapNote.Text = "📌 Note: Supports US/VN toggle!\n⚠️ Warning: Behind Detector must be ENABLED, otherwise Auto Guess will not work."
+slapNote.Text = "📌 Note: Behind Detector must be ENABLED, otherwise Auto Guess will not work."
 slapNote.TextColor3 = Color3.fromRGB(200, 200, 200)
 slapNote.TextSize = 9
 slapNote.Font = Enum.Font.Gotham
@@ -160,20 +160,38 @@ slapNote.TextWrapped = true
 slapNote.TextXAlignment = Enum.TextXAlignment.Left
 slapNote.Parent = contentContainer
 
+-- =================================================================
+-- NÚT CHUYỂN NGÔN NGỮ US/VN CHO LOADER
+-- =================================================================
+local toggleRegionLoaderBtn = Instance.new("TextButton")
+toggleRegionLoaderBtn.Size = UDim2.new(0.9, 0, 0, 26)
+toggleRegionLoaderBtn.Position = UDim2.new(0.05, 0, 0, 275)
+toggleRegionLoaderBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
+toggleRegionLoaderBtn.Text = "🇻🇳 Khu vực: VN (Tiếng Việt)"
+toggleRegionLoaderBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleRegionLoaderBtn.TextSize = 10
+toggleRegionLoaderBtn.Font = Enum.Font.GothamBold
+toggleRegionLoaderBtn.Parent = contentContainer
+
+local btnCornerRegionLoader = Instance.new("UICorner")
+btnCornerRegionLoader.CornerRadius = UDim.new(0, 6)
+btnCornerRegionLoader.Parent = toggleRegionLoaderBtn
+
 -- Trạng thái thông báo ở đáy Loader
 local statusLabel = Instance.new("TextLabel")
 statusLabel.Size = UDim2.new(0.9, 0, 0, 22)
-statusLabel.Position = UDim2.new(0.05, 0, 0, 278)
+statusLabel.Position = UDim2.new(0.05, 0, 0, 308)
 statusLabel.BackgroundTransparency = 1
-statusLabel.Text = "Status: Ready to load..."
+statusLabel.Text = "Trạng thái: Sẵn sàng..."
 statusLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
 statusLabel.TextSize = 10
 statusLabel.Font = Enum.Font.GothamBold
 statusLabel.Parent = contentContainer
 
 -- =================================================================
--- LOGIC SỰ KIỆN
+-- LOGIC SỰ KIỆN & CHUYỂN NGÔN NGỮ
 -- =================================================================
+local isUSModeLoader = false
 
 -- Thu nhỏ / Mở rộng Loader
 local isMinimized = false
@@ -189,7 +207,7 @@ minimizeBtn.MouseButton1Click:Connect(function()
         end
     else
         minimizeBtn.Text = "-"
-        frame.Size = UDim2.new(0, 260, 0, 310)
+        frame.Size = UDim2.new(0, 260, 0, 345)
         for _, child in ipairs(contentContainer:GetChildren()) do
             if child:IsA("GuiObject") then
                 child.Visible = true
@@ -198,9 +216,31 @@ minimizeBtn.MouseButton1Click:Connect(function()
     end
 end)
 
+-- Toggle US/VN cho Loader
+toggleRegionLoaderBtn.MouseButton1Click:Connect(function()
+    isUSModeLoader = not isUSModeLoader
+    if isUSModeLoader then
+        toggleRegionLoaderBtn.Text = "🇺🇸 Region: US (English)"
+        title.Text = "  🚀 SCRIPT LOADER MENU"
+        loadHugBtn.Text = "▶ Load Hug Tower Script"
+        loadSlapBtn.Text = "▶ Load Slap Script"
+        hugNote.Text = "📌 Note: Auto Kill All will NOT auto-release because of a bug. Please press the release button manually."
+        slapNote.Text = "📌 Note: Behind Detector must be ENABLED, otherwise Auto Guess will not work."
+        statusLabel.Text = "Status: Ready to load..."
+    else
+        toggleRegionLoaderBtn.Text = "🇻🇳 Khu vực: VN (Tiếng Việt)"
+        title.Text = "  🚀 SCRIPT LOADER MENU"
+        loadHugBtn.Text = "▶ Tải Script Hug Tower"
+        loadSlapBtn.Text = "▶ Tải Script Slap"
+        hugNote.Text = "📌 Lưu ý: Auto Kill All khi bật sẽ không tự động thả vì đang lỗi. Xin phép ấn thủ công nút thả nhé!"
+        slapNote.Text = "📌 Lưu ý: Tính năng Dò Phía Sau phải bật, nếu không tính năng Auto Đoán sẽ không hoạt động."
+        statusLabel.Text = "Trạng thái: Sẵn sàng..."
+    end
+end)
+
 -- Nút Load Hug Tower Script
 loadHugBtn.MouseButton1Click:Connect(function()
-    statusLabel.Text = "Status: Loading Hug Tower..."
+    statusLabel.Text = isUSModeLoader and "Status: Loading Hug Tower..." or "Trạng thái: Đang tải Hug Tower..."
     statusLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
     
     local success, err = pcall(function()
@@ -208,10 +248,10 @@ loadHugBtn.MouseButton1Click:Connect(function()
     end)
     
     if success then
-        statusLabel.Text = "Status: Hug Tower loaded successfully!"
+        statusLabel.Text = isUSModeLoader and "Status: Hug Tower loaded!" or "Trạng thái: Đã tải Hug Tower!"
         statusLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
     else
-        statusLabel.Text = "Status: Load failed!"
+        statusLabel.Text = isUSModeLoader and "Status: Load failed!" or "Trạng thái: Tải thất bại!"
         statusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
         warn("Hug Tower Load Error:", err)
     end
@@ -219,7 +259,7 @@ end)
 
 -- Nút Load Slapper Script
 loadSlapBtn.MouseButton1Click:Connect(function()
-    statusLabel.Text = "Status: Loading Slapper..."
+    statusLabel.Text = isUSModeLoader and "Status: Loading Slapper..." or "Trạng thái: Đang tải Slap..."
     statusLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
     
     local success, err = pcall(function()
@@ -227,13 +267,13 @@ loadSlapBtn.MouseButton1Click:Connect(function()
     end)
     
     if success then
-        statusLabel.Text = "Status: Slapper loaded successfully!"
+        statusLabel.Text = isUSModeLoader and "Status: Slapper loaded!" or "Trạng thái: Đã tải Slap!"
         statusLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
     else
-        statusLabel.Text = "Status: Load failed!"
+        statusLabel.Text = isUSModeLoader and "Status: Load failed!" or "Trạng thái: Tải thất bại!"
         statusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
         warn("Slapper Load Error:", err)
     end
 end)
 
-print("✅ Game Loader GUI loaded successfully for Trung!")
+print("✅ Game Loader GUI loaded successfully with US/VN toggle!")
