@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT SLAP.LUA - LOGO NỔI ĐỘC LẬP KHI THU NHỎ
+-- SCRIPT SLAP.LUA - HOÀN CHỈNH 100%
 -- =================================================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -327,13 +327,25 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
+-- LOOP AUTO SLAP
 task.spawn(function()
     while true do
-        task.wait(math.random(200, 400) / 1000)
+        local randomDelay = math.random(150, 300) / 1000
+        task.wait(randomDelay)
+        
         if isAutoSlapRunning then
             pcall(function()
-                local slapBtn = playerGui:FindFirstChild("ScreenGui") and playerGui.ScreenGui:FindFirstChild("slapbut")
-                if slapBtn and slapBtn.Visible then slapBtn:Activate() end
+                local screenGuiTarget = playerGui:FindFirstChild("ScreenGui")
+                local slapBtn = screenGuiTarget and screenGuiTarget:FindFirstChild("slapbut")
+                
+                if slapBtn and slapBtn:IsA("GuiObject") and slapBtn.Visible then
+                    if getconnections then
+                        for _, connection in pairs(getconnections(slapBtn.MouseButton1Click)) do
+                            connection:Fire()
+                        end
+                    end
+                    slapBtn:Activate()
+                end
             end)
         end
     end
@@ -354,13 +366,19 @@ task.spawn(function()
         task.wait(0.05)
         if isAutoMeterRunning then
             pcall(function()
-                local meterGui = playerGui:FindFirstChild("ScreenGui") and playerGui.ScreenGui:FindFirstChild("meter")
+                local pGui = localPlayer:FindFirstChild("PlayerGui")
+                local sGui = pGui and pGui:FindFirstChild("ScreenGui")
+                local meterGui = sGui and sGui:FindFirstChild("meter")
+                
                 if meterGui then
                     if not hasFiredMeter then
-                        if not meterStartTime then meterStartTime = tick()
+                        if not meterStartTime then
+                            meterStartTime = tick()
                         elseif tick() - meterStartTime >= 1.89 then
                             hasFiredMeter = true
-                            ReplicatedStorage.events.SendSlap:FireServer(tonumber(customMeterInput.Text) or 1)
+                            local customVal = tonumber(customMeterInput.Text) or 1
+                            local sendSlapEvent = ReplicatedStorage:FindFirstChild("events") and ReplicatedStorage.events:FindFirstChild("SendSlap")
+                            if sendSlapEvent then sendSlapEvent:FireServer(customVal) end
                         end
                     end
                 else
