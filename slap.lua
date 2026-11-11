@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT SLAP.LUA - HOÀN CHỈNH 100%
+-- SCRIPT SLAP.LUA - CẬP NHẬT CHỜ METER 1.5S & FIX AUTO ĐO
 -- =================================================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -361,24 +361,32 @@ task.spawn(function()
     end
 end)
 
+-- LOOP AUTO ĐO (CẬP NHẬT CHỜ 1.5 S VÀ FIX QUÉT METER GUI)
 task.spawn(function()
     while true do
         task.wait(0.05)
         if isAutoMeterRunning then
             pcall(function()
-                local pGui = localPlayer:FindFirstChild("PlayerGui")
-                local sGui = pGui and pGui:FindFirstChild("ScreenGui")
-                local meterGui = sGui and sGui:FindFirstChild("meter")
+                local meterGui = nil
+                -- Tìm kiếm GuiObject có tên "meter" trong toàn bộ PlayerGui
+                for _, obj in ipairs(playerGui:GetDescendants()) do
+                    if obj.Name == "meter" and obj:IsA("GuiObject") and obj.Visible then
+                        meterGui = obj
+                        break
+                    end
+                end
                 
                 if meterGui then
                     if not hasFiredMeter then
                         if not meterStartTime then
                             meterStartTime = tick()
-                        elseif tick() - meterStartTime >= 1.89 then
+                        elseif tick() - meterStartTime >= 1.5 then -- Đã đổi thành đúng 1.5 giây
                             hasFiredMeter = true
                             local customVal = tonumber(customMeterInput.Text) or 1
                             local sendSlapEvent = ReplicatedStorage:FindFirstChild("events") and ReplicatedStorage.events:FindFirstChild("SendSlap")
-                            if sendSlapEvent then sendSlapEvent:FireServer(customVal) end
+                            if sendSlapEvent then 
+                                sendSlapEvent:FireServer(customVal) 
+                            end
                         end
                     end
                 else
