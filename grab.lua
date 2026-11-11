@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT GRAB.LUA - LOGO NỔI ĐỘC LẬP KHI THU NHỎ
+-- SCRIPT GRAB.LUA - CÓ TÍNH NĂNG TP TRẢ LẠI VỊ TRÍ CŨ KHI TẮT AUTO KILL
 -- =================================================================
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -186,6 +186,7 @@ local isAutoGrabAllRunning = false
 local isAutoKillAllRunning = false
 local isUSModeGrab = false
 local platformPart = nil
+local savedOldPosition = nil -- Lưu vị trí cũ trước khi bật Auto Kill All
 
 local hugRequestRemote = ReplicatedStorage:FindFirstChild("HugRemotes") and ReplicatedStorage.HugRemotes:FindFirstChild("HugRequest")
 
@@ -248,19 +249,36 @@ end)
 
 autoKillAllBtn.MouseButton1Click:Connect(function()
     isAutoKillAllRunning = not isAutoKillAllRunning
+    local char = localPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    
     if isAutoKillAllRunning then
         autoKillAllBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
         autoKillAllBtn.Text = isUSModeGrab and "Auto Kill All (TP + Grab): ON" or "Auto Kill All (TP Bục + Grab & Thả): BẬT"
+        
+        if root then
+            savedOldPosition = root.CFrame -- Lưu vị trí hiện tại trước khi TP
+        end
+        
         createPlatform()
         pcall(function()
-            local char = localPlayer.Character
-            local root = char and char:FindFirstChild("HumanoidRootPart")
             if root then root.CFrame = CFrame.new(-3.050, -54.182, 98.073) end
         end)
     else
         autoKillAllBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
         autoKillAllBtn.Text = isUSModeGrab and "Auto Kill All (TP + Grab): OFF" or "Auto Kill All (TP Bục + Grab & Thả): TẮT"
+        
         removePlatform()
+        
+        -- TP trả lại vị trí cũ khi tắt Auto Kill All
+        if savedOldPosition and root then
+            pcall(function()
+                root.Anchored = true
+                root.CFrame = savedOldPosition
+                task.wait(0.2)
+                root.Anchored = false
+            end)
+        end
     end
 end)
 
