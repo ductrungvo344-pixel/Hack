@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT GRAB.LUA - CÓ LOGO TRÒN "agg2" & ĐỔI TÊN US/VN
+-- SCRIPT GRAB.LUA - LOGO NỔI ĐỘC LẬP KHI THU NHỎ
 -- =================================================================
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -41,7 +41,29 @@ local titleCorner = Instance.new("UICorner")
 titleCorner.CornerRadius = UDim.new(0, 8)
 titleCorner.Parent = title
 
--- LOGO TRÒN "agg2" THU NHỎ / MỞ RỘNG
+-- Logo nổi độc lập khi thu nhỏ
+local floatingLogo = Instance.new("TextButton")
+floatingLogo.Size = UDim2.new(0, 35, 0, 35)
+floatingLogo.Position = UDim2.new(0.72, 0, 0.48, 0)
+floatingLogo.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
+floatingLogo.Text = "agg2"
+floatingLogo.TextColor3 = Color3.fromRGB(255, 255, 255)
+floatingLogo.TextSize = 10
+floatingLogo.Font = Enum.Font.GothamBold
+floatingLogo.Visible = false
+floatingLogo.Active = true
+floatingLogo.Draggable = true
+floatingLogo.Parent = screenGui
+
+local fLogoCorner = Instance.new("UICorner")
+fLogoCorner.CornerRadius = UDim.new(1, 0)
+fLogoCorner.Parent = floatingLogo
+
+local fLogoStroke = Instance.new("UIStroke")
+fLogoStroke.Color = Color3.fromRGB(255, 255, 255)
+fLogoStroke.Thickness = 2
+fLogoStroke.Parent = floatingLogo
+
 local logoBtn = Instance.new("TextButton")
 logoBtn.Size = UDim2.new(0, 26, 0, 26)
 logoBtn.Position = UDim2.new(1, -28, 0, 2)
@@ -148,26 +170,22 @@ infoStatusLabel.Font = Enum.Font.Gotham
 infoStatusLabel.TextWrapped = true
 infoStatusLabel.Parent = contentContainer
 
+logoBtn.MouseButton1Click:Connect(function()
+    frame.Visible = false
+    floatingLogo.Position = frame.Position
+    floatingLogo.Visible = true
+end)
+
+floatingLogo.MouseButton1Click:Connect(function()
+    frame.Position = floatingLogo.Position
+    floatingLogo.Visible = false
+    frame.Visible = true
+end)
+
 local isAutoGrabAllRunning = false
 local isAutoKillAllRunning = false
 local isUSModeGrab = false
 local platformPart = nil
-local isMinimized = false
-
-logoBtn.MouseButton1Click:Connect(function()
-    isMinimized = not isMinimized
-    if isMinimized then
-        frame.Size = UDim2.new(0, 240, 0, 30)
-        for _, child in ipairs(contentContainer:GetChildren()) do
-            if child:IsA("GuiObject") then child.Visible = false end
-        end
-    else
-        frame.Size = UDim2.new(0, 240, 0, 235)
-        for _, child in ipairs(contentContainer:GetChildren()) do
-            if child:IsA("GuiObject") then child.Visible = true end
-        end
-    end
-end)
 
 local hugRequestRemote = ReplicatedStorage:FindFirstChild("HugRemotes") and ReplicatedStorage.HugRemotes:FindFirstChild("HugRequest")
 
