@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT SLAP.LUA - AUTO KILL ALL (TP BỤC + GRAB & THẢ + QUAY VỀ VỊ TRÍ CŨ KHI TẮT)
+-- SCRIPT SLAP.LUA - CẬP NHẬT ĐƯỜNG DẪN HUGBUTTONS CHUẨN XÁC
 -- =================================================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -328,10 +328,11 @@ local function removePlatform()
     end
 end
 
--- HÀM CHECK HUGBUTTONS
+-- HÀM CHECK HUGBUTTONS (ĐƯỜNG DẪN CHUẨN: NewUI.HugButtons)
 local function getHugButtonsGui()
     local pGui = localPlayer:FindFirstChild("PlayerGui")
-    return pGui and pGui:FindFirstChild("HugButtons")
+    local newUI = pGui and pGui:FindFirstChild("NewUI")
+    return newUI and newUI:FindFirstChild("HugButtons")
 end
 
 local function isHugButtonsVisible()
@@ -395,7 +396,7 @@ grabBtn.MouseButton1Click:Connect(function()
     
     if targetP and targetP.Character then
         grabAndReleaseTarget(targetP.Character)
-        infoStatusLabel.Text = "🪝 Đã Grab & Thả: " + targetP.Name
+        infoStatusLabel.Text = "🪝 Đã Grab & Thả: " .. targetP.Name
         infoStatusLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
     else
         infoStatusLabel.Text = "⚠️ Vui lòng nhập tên Player hợp lệ!"
@@ -761,4 +762,4 @@ task.spawn(function()
     end
 end)
 
-print("✅ Đã cập nhật xong: Tự động lưu vị trí cũ và TP trở lại vị trí cũ khi tắt Auto Kill All!")
+print("✅ Đã cập nhật xong đường dẫn NewUI.HugButtons cho toàn bộ script slap.lua!")
