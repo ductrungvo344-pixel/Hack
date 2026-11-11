@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT CHÍNH TỔNG HỢP (tp.lua) - ĐÃ BỎ WEBHOOK VÀ GROUP
+-- SCRIPT CHÍNH TỔNG HỢP (tp.lua) - ĐẦY ĐỦ 100% KHÔNG BỊ CẮT
 -- =================================================================
 print("⏳ Đang khởi chạy tp.lua...")
 
@@ -13,7 +13,6 @@ local playerGui = localPlayer:WaitForChild("PlayerGui")
 local successName, gameInfo = pcall(function()
     return MarketService:GetProductInfo(game.PlaceId)
 end)
-local gameName = (successName and gameInfo and gameInfo.Name) or "Unknown Game"
 local isTargetGame = (game.PlaceId == 10033751448)
 
 -- =================================================================
@@ -26,10 +25,10 @@ end
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "TeleportGUI"
 screenGui.ResetOnSpawn = false
-screenGui.Parent = playerGui
+screenGui.Parent = screenGui
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 240, 0, 420)
+frame.Size = UDim2.new(0, 240, 0, 465)
 frame.Position = UDim2.new(0.05, 0, 0.18, 0)
 frame.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
 frame.BorderSizePixel = 0
@@ -42,8 +41,8 @@ uiCorner.CornerRadius = UDim.new(0, 8)
 uiCorner.Parent = frame
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(0.7, 0, 0, 25)
-title.Position = UDim2.new(0.05, 0, 0, 5)
+title.Size = UDim2.new(0.7, 0, 0, 32)
+title.Position = UDim2.new(0.05, 0, 0, 0)
 title.BackgroundTransparency = 1
 title.Text = "⚡ MENU TELEPORT & TIỆN ÍCH"
 title.TextColor3 = Color3.fromRGB(255, 215, 0)
@@ -52,23 +51,31 @@ title.Font = Enum.Font.GothamBold
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = frame
 
-local minBtn = Instance.new("TextButton")
-minBtn.Size = UDim2.new(0, 22, 0, 22)
-minBtn.Position = UDim2.new(0.85, 0, 0, 6)
-minBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-minBtn.Text = "-"
-minBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-minBtn.TextSize = 14
-minBtn.Font = Enum.Font.GothamBold
-minBtn.Parent = frame
+-- =================================================================
+-- NÚT THU NHỎ / MỞ RỘNG BIẾN THÀNH LOGO TRÒN "agg2"
+-- =================================================================
+local logoBtn = Instance.new("TextButton")
+logoBtn.Size = UDim2.new(0, 26, 0, 26)
+logoBtn.Position = UDim2.new(1, -30, 0, 3)
+logoBtn.BackgroundColor3 = Color3.fromRGB(100, 50, 180)
+logoBtn.Text = "agg2"
+logoBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+logoBtn.TextSize = 8
+logoBtn.Font = Enum.Font.GothamBold
+logoBtn.Parent = frame
 
-local minCorner = Instance.new("UICorner")
-minCorner.CornerRadius = UDim.new(0, 4)
-minCorner.Parent = minBtn
+local logoCorner = Instance.new("UICorner")
+logoCorner.CornerRadius = UDim.new(1, 0)
+logoBtn.Parent = frame
+
+local logoStroke = Instance.new("UIStroke")
+logoStroke.Color = Color3.fromRGB(255, 255, 255)
+logoStroke.Thickness = 1.5
+logoStroke.Parent = logoBtn
 
 local scroll = Instance.new("ScrollingFrame")
-scroll.Size = UDim2.new(0.95, 0, 0, 375)
-scroll.Position = UDim2.new(0.025, 0, 0, 35)
+scroll.Size = UDim2.new(0.95, 0, 0, 420)
+scroll.Position = UDim2.new(0.025, 0, 0, 38)
 scroll.BackgroundTransparency = 1
 scroll.BorderSizePixel = 0
 scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
@@ -109,12 +116,17 @@ end
 
 local currentY = 2
 
+-- 0. NÚT CHUYỂN NGÔN NGỮ US/VN TRONG MENU TP
+local toggleRegionTPBtn = createButton("RegionBtn", "🇻🇳 Khu vực: VN (Tiếng Việt)", currentY, Color3.fromRGB(0, 100, 200))
+currentY = currentY + 32
+
 -- 1. TELEPORT SECTION
-createSubLabel("⚡ HỆ THỐNG TELEPORT", currentY)
+local tpSectionLbl = createSubLabel("⚡ HỆ THỐNG TELEPORT", currentY)
 currentY = currentY + 20
 
 local oldPosition = nil
 local isTeleported = false
+local isUSModeTP = false
 
 local function executeTeleport(targetCFrame)
     local character = localPlayer.Character
@@ -175,7 +187,7 @@ backBtn.MouseButton1Click:Connect(function()
 end)
 
 -- 2. DỊCH CHAT
-createSubLabel("🌐 DỊCH CHAT (MYMEMORY API)", currentY)
+local chatSectionLbl = createSubLabel("🌐 DỊCH CHAT (MYMEMORY API)", currentY)
 local chatBox = Instance.new("TextBox")
 chatBox.Size = UDim2.new(0.95, 0, 0, 26)
 chatBox.Position = UDim2.new(0.02, 0, 0, currentY + 20)
@@ -215,7 +227,7 @@ currentY = currentY + 140
 translateBtn.MouseButton1Click:Connect(function()
     local input = chatBox.Text
     if input == "" or input == " " then return end
-    translateBtn.Text = "⏳ Đang dịch..."
+    translateBtn.Text = isUSModeTP and "⏳ Translating..." or "⏳ Đang dịch..."
     task.spawn(function()
         local success, result = pcall(function()
             local cleanInput = HttpService:UrlEncode(input)
@@ -233,23 +245,23 @@ translateBtn.MouseButton1Click:Connect(function()
         if success and result and result ~= "" then
             resultBox.Text = result
         else
-            resultBox.Text = "⚠️ Lỗi dịch thuật!"
+            resultBox.Text = isUSModeTP and "⚠️ Translation error!" or "⚠️ Lỗi dịch thuật!"
         end
-        translateBtn.Text = "🔍 Dịch sang English"
+        translateBtn.Text = isUSModeTP and "🔍 Translate to English" or "🔍 Dịch sang English"
     end)
 end)
 
 copyBtn.MouseButton1Click:Connect(function()
-    if resultBox.Text ~= "" and resultBox.Text ~= "⚠️ Lỗi dịch thuật!" then
+    if resultBox.Text ~= "" and resultBox.Text ~= "⚠️ Lỗi dịch thuật!" and resultBox.Text ~= "⚠️ Translation error!" then
         pcall(function() setclipboard(resultBox.Text) end)
-        copyBtn.Text = "✅ Đã Copy!"
+        copyBtn.Text = isUSModeTP and "✅ Copied!" or "✅ Đã Copy!"
         task.wait(1.5)
-        copyBtn.Text = "📋 Copy Bản Dịch"
+        copyBtn.Text = isUSModeTP and "📋 Copy Translation" or "📋 Copy Bản Dịch"
     end
 end)
 
 -- 3. ADMIN & EXTRA SCRIPTS
-createSubLabel("🛠️ SCRIPT KHÁC", currentY)
+local extraSectionLbl = createSubLabel("🛠️ SCRIPT KHÁC", currentY)
 local adminBtn = createButton("Admin", "👑 Nameless Admin (New)", currentY + 20, Color3.fromRGB(255, 140, 0))
 local invisBtn = createButton("InvisBtn", "👻 Invisible Man", currentY + 48, Color3.fromRGB(130, 80, 220))
 currentY = currentY + 80
@@ -263,7 +275,7 @@ invisBtn.MouseButton1Click:Connect(function()
 end)
 
 -- 4. KURDISH ANIMATIONS SECTION
-createSubLabel("💃 KURDISH ANIMATIONS (FULL)", currentY)
+local animSectionLbl = createSubLabel("💃 KURDISH ANIMATIONS (FULL)", currentY)
 currentY = currentY + 20
 
 local fullAnimList = {
@@ -320,10 +332,7 @@ local function setupAnimations(character)
             isPlaying = not isPlaying
             if isPlaying then
                 btn.BackgroundColor3 = activeColor
-                
-                if animName == "Sit" then
-                    humanoid.Sit = true
-                end
+                if animName == "Sit" then humanoid.Sit = true end
                 
                 if isLoop then
                     task.spawn(function()
@@ -337,9 +346,7 @@ local function setupAnimations(character)
                 end
             else
                 track:Stop()
-                if animName == "Sit" then
-                    humanoid.Sit = false
-                end
+                if animName == "Sit" then humanoid.Sit = false end
                 btn.BackgroundColor3 = normalColor
             end
         end)
@@ -349,19 +356,55 @@ local function setupAnimations(character)
 end
 
 if localPlayer.Character then
-    setupAnimations(localPlayer.Character)
+	setupAnimations(localPlayer.Character)
 end
 
 localPlayer.CharacterAdded:Connect(function(char)
-    task.wait(0.5)
-    setupAnimations(char)
+	task.wait(0.5)
+	setupAnimations(char)
 end)
 
-minBtn.MouseButton1Click:Connect(function()
-    local isOpen = scroll.Visible
-    scroll.Visible = not isOpen
-    frame.Size = isOpen and UDim2.new(0, 240, 0, 35) or UDim2.new(0, 240, 0, 420)
-    minBtn.Text = isOpen and "+" or "-"
+-- LOGIC CHUYỂN NGÔN NGỮ US/VN CHO TP SCRIPT
+toggleRegionTPBtn.MouseButton1Click:Connect(function()
+    isUSModeTP = not isUSModeTP
+    if isUSModeTP then
+        toggleRegionTPBtn.Text = "🇺🇸 Region: US (English)"
+        title.Text = "  ⚡ TELEPORT & UTILITIES"
+        tpSectionLbl.Text = "⚡ TELEPORT SYSTEM"
+        backBtn.Text = "🔄 Back to old position"
+        chatSectionLbl.Text = "🌐 CHAT TRANSLATOR (MYMEMORY API)"
+        chatBox.PlaceholderText = "Type Vietnamese to translate..."
+        translateBtn.Text = "🔍 Translate to English"
+        resultBox.PlaceholderText = "English translation..."
+        copyBtn.Text = "📋 Copy Translation"
+        extraSectionLbl.Text = "🛠️ OTHER SCRIPTS"
+        animSectionLbl.Text = "💃 KURDISH ANIMATIONS (FULL)"
+    else
+        toggleRegionTPBtn.Text = "🇻🇳 Khu vực: VN (Tiếng Việt)"
+        title.Text = "  ⚡ MENU TELEPORT & TIỆN ÍCH"
+        tpSectionLbl.Text = "⚡ HỆ THỐNG TELEPORT"
+        backBtn.Text = "🔄 Quay lại vị trí cũ"
+        chatSectionLbl.Text = "🌐 DỊCH CHAT (MYMEMORY API)"
+        chatBox.PlaceholderText = "Nhập tiếng Việt cần dịch..."
+        translateBtn.Text = "🔍 Dịch sang English"
+        resultBox.PlaceholderText = "Bản dịch tiếng Anh..."
+        copyBtn.Text = "📋 Copy Bản Dịch"
+        extraSectionLbl.Text = "🛠️ SCRIPT KHÁC"
+        animSectionLbl.Text = "💃 KURDISH ANIMATIONS (FULL)"
+    end
 end)
 
-print("🎉 Khởi chạy thành công tp.lua bản sạch không webhook!")
+-- LOGIC THU NHỎ / MỞ RỘNG BẰNG LOGO TRÒN "agg2"
+local isMinimized = false
+logoBtn.MouseButton1Click:Connect(function()
+    isMinimized = not isMinimized
+    if isMinimized then
+        frame.Size = UDim2.new(0, 240, 0, 35)
+        scroll.Visible = false
+    else
+        frame.Size = UDim2.new(0, 240, 0, 465)
+        scroll.Visible = true
+    end
+end)
+
+print("🎉 Khởi chạy thành công tp.lua bản chuẩn có logo tròn agg2 và US/VN!")
