@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT GRAB.LUA - ĐÃ FIX ĐỔI TÊN NÚT KHI CHUYỂN US/VN
+-- SCRIPT GRAB.LUA - CÓ LOGO TRÒN "agg2" & ĐỔI TÊN US/VN
 -- =================================================================
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -41,6 +41,30 @@ local titleCorner = Instance.new("UICorner")
 titleCorner.CornerRadius = UDim.new(0, 8)
 titleCorner.Parent = title
 
+-- LOGO TRÒN "agg2" THU NHỎ / MỞ RỘNG
+local logoBtn = Instance.new("TextButton")
+logoBtn.Size = UDim2.new(0, 26, 0, 26)
+logoBtn.Position = UDim2.new(1, -28, 0, 2)
+logoBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
+logoBtn.Text = "agg2"
+logoBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+logoBtn.TextSize = 8
+logoBtn.Font = Enum.Font.GothamBold
+logoBtn.Parent = frame
+
+local logoCorner = Instance.new("UICorner")
+logoCorner.CornerRadius = UDim.new(1, 0)
+logoBtn.Parent = frame
+
+local logoStroke = Instance.new("UIStroke")
+logoStroke.Color = Color3.fromRGB(255, 255, 255)
+logoStroke.Thickness = 1.5
+logoStroke.Parent = logoBtn
+
+local contentContainer = Instance.new("Folder")
+contentContainer.Name = "ContentContainer"
+contentContainer.Parent = frame
+
 local playerInputBox = Instance.new("TextBox")
 playerInputBox.Size = UDim2.new(0.9, 0, 0, 24)
 playerInputBox.Position = UDim2.new(0.05, 0, 0, 40)
@@ -51,7 +75,7 @@ playerInputBox.TextColor3 = Color3.fromRGB(0, 255, 150)
 playerInputBox.TextSize = 10
 playerInputBox.Font = Enum.Font.GothamBold
 playerInputBox.ClearTextOnFocus = false
-playerInputBox.Parent = frame
+playerInputBox.Parent = contentContainer
 
 local boxCornerGrab = Instance.new("UICorner")
 boxCornerGrab.CornerRadius = UDim.new(0, 6)
@@ -65,7 +89,7 @@ grabBtn.Text = "🪝 Grab Người Này"
 grabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 grabBtn.TextSize = 10
 grabBtn.Font = Enum.Font.GothamBold
-grabBtn.Parent = frame
+grabBtn.Parent = contentContainer
 
 local btnCornerG1 = Instance.new("UICorner")
 btnCornerG1.CornerRadius = UDim.new(0, 6)
@@ -79,7 +103,7 @@ autoGrabAllBtn.Text = "🤖 Auto Grab ALL: TẮT"
 autoGrabAllBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 autoGrabAllBtn.TextSize = 9
 autoGrabAllBtn.Font = Enum.Font.GothamBold
-autoGrabAllBtn.Parent = frame
+autoGrabAllBtn.Parent = contentContainer
 
 local btnCornerG2 = Instance.new("UICorner")
 btnCornerG2.CornerRadius = UDim.new(0, 6)
@@ -93,7 +117,7 @@ autoKillAllBtn.Text = "⚔️ Auto Kill All (TP Bục + Grab & Thả): TẮT"
 autoKillAllBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 autoKillAllBtn.TextSize = 10
 autoKillAllBtn.Font = Enum.Font.GothamBold
-autoKillAllBtn.Parent = frame
+autoKillAllBtn.Parent = contentContainer
 
 local btnCornerKillAll = Instance.new("UICorner")
 btnCornerKillAll.CornerRadius = UDim.new(0, 6)
@@ -107,7 +131,7 @@ toggleRegionGrabBtn.Text = "🇻🇳 Khu vực: VN (Tiếng Việt)"
 toggleRegionGrabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 toggleRegionGrabBtn.TextSize = 10
 toggleRegionGrabBtn.Font = Enum.Font.GothamBold
-toggleRegionGrabBtn.Parent = frame
+toggleRegionGrabBtn.Parent = contentContainer
 
 local btnCornerRegionGrab = Instance.new("UICorner")
 btnCornerRegionGrab.CornerRadius = UDim.new(0, 6)
@@ -122,12 +146,28 @@ infoStatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
 infoStatusLabel.TextSize = 10
 infoStatusLabel.Font = Enum.Font.Gotham
 infoStatusLabel.TextWrapped = true
-infoStatusLabel.Parent = frame
+infoStatusLabel.Parent = contentContainer
 
 local isAutoGrabAllRunning = false
 local isAutoKillAllRunning = false
 local isUSModeGrab = false
 local platformPart = nil
+local isMinimized = false
+
+logoBtn.MouseButton1Click:Connect(function()
+    isMinimized = not isMinimized
+    if isMinimized then
+        frame.Size = UDim2.new(0, 240, 0, 30)
+        for _, child in ipairs(contentContainer:GetChildren()) do
+            if child:IsA("GuiObject") then child.Visible = false end
+        end
+    else
+        frame.Size = UDim2.new(0, 240, 0, 235)
+        for _, child in ipairs(contentContainer:GetChildren()) do
+            if child:IsA("GuiObject") then child.Visible = true end
+        end
+    end
+end)
 
 local hugRequestRemote = ReplicatedStorage:FindFirstChild("HugRemotes") and ReplicatedStorage.HugRemotes:FindFirstChild("HugRequest")
 
