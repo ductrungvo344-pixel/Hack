@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT LOADER CHÍNH - NÚT THU NHỎ BIẾN THÀNH LOGO TRÒN "agg2"
+-- SCRIPT LOADER CHÍNH - LOGO NỔI ĐỘC LẬP KHI THU NHỎ
 -- =================================================================
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
@@ -43,24 +43,44 @@ local titleCorner = Instance.new("UICorner")
 titleCorner.CornerRadius = UDim.new(0, 10)
 titleCorner.Parent = title
 
--- =================================================================
--- NÚT THU NHỎ BIẾN THÀNH LOGO TRÒN HÌNH "agg2"
--- =================================================================
+-- Logo tròn nổi độc lập (Dùng để mở lại menu khi menu chính ẩn)
+local floatingLogo = Instance.new("TextButton")
+floatingLogo.Size = UDim2.new(0, 35, 0, 35)
+floatingLogo.Position = UDim2.new(0, 50, 0, 50)
+floatingLogo.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+floatingLogo.Text = "agg2"
+floatingLogo.TextColor3 = Color3.fromRGB(255, 255, 255)
+floatingLogo.TextSize = 10
+floatingLogo.Font = Enum.Font.GothamBold
+floatingLogo.Visible = false
+floatingLogo.Active = true
+floatingLogo.Draggable = true
+floatingLogo.Parent = screenGui
+
+local fLogoCorner = Instance.new("UICorner")
+fLogoCorner.CornerRadius = UDim.new(1, 0)
+fLogoCorner.Parent = floatingLogo
+
+local fLogoStroke = Instance.new("UIStroke")
+fLogoStroke.Color = Color3.fromRGB(255, 255, 255)
+fLogoStroke.Thickness = 2
+fLogoStroke.Parent = floatingLogo
+
+-- Nút thu nhỏ trên thanh tiêu đề
 local logoBtn = Instance.new("TextButton")
-logoBtn.Size = UDim2.new(0, 28, 0, 28)
+logoBtn.Size = UDim2.new(0, 26, 0, 26)
 logoBtn.Position = UDim2.new(1, -32, 0, 4)
 logoBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
 logoBtn.Text = "agg2"
 logoBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-logoBtn.TextSize = 9
+logoBtn.TextSize = 8
 logoBtn.Font = Enum.Font.GothamBold
 logoBtn.Parent = frame
 
 local logoCorner = Instance.new("UICorner")
-logoCorner.CornerRadius = UDim.new(1, 0) -- Bo tròn 100% thành hình tròn
-logoBtn.Parent = frame
+logoCorner.CornerRadius = UDim.new(1, 0)
+logoCorner.Parent = logoBtn
 
--- Viền sáng cho logo tròn
 local logoStroke = Instance.new("UIStroke")
 logoStroke.Color = Color3.fromRGB(255, 255, 255)
 logoStroke.Thickness = 1.5
@@ -212,24 +232,18 @@ statusLabel.Font = Enum.Font.GothamBold
 statusLabel.Parent = contentContainer
 
 local isUSModeLoader = false
-local isMinimized = false
 
--- LOGIC THU NHỎ / MỞ RỘNG BẰNG LOGO TRÒN "agg2"
+-- LOGIC THU NHỎ / MỞ RỘNG BẰNG LOGO NỔI
 logoBtn.MouseButton1Click:Connect(function()
-    isMinimized = not isMinimized
-    if isMinimized then
-        -- Thu nhỏ thành khung chỉ hiển thị thanh tiêu đề và logo tròn
-        frame.Size = UDim2.new(0, 260, 0, 35)
-        for _, child in ipairs(contentContainer:GetChildren()) do
-            if child:IsA("GuiObject") then child.Visible = false end
-        end
-    else
-        -- Mở rộng đầy đủ menu
-        frame.Size = UDim2.new(0, 260, 0, 400)
-        for _, child in ipairs(contentContainer:GetChildren()) do
-            if child:IsA("GuiObject") then child.Visible = true end
-        end
-    end
+    frame.Visible = false
+    floatingLogo.Position = frame.Position
+    floatingLogo.Visible = true
+end)
+
+floatingLogo.MouseButton1Click:Connect(function()
+    frame.Position = floatingLogo.Position
+    floatingLogo.Visible = false
+    frame.Visible = true
 end)
 
 toggleRegionLoaderBtn.MouseButton1Click:Connect(function()
