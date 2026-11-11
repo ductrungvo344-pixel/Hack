@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT CHÍNH TỔNG HỢP (tp.lua) - ĐẦY ĐỦ 100% KHÔNG BỊ CẮT
+-- SCRIPT CHÍNH TỔNG HỢP (tp.lua) - LOGO NỔI ĐỘC LẬP KHI THU NHỎ
 -- =================================================================
 print("⏳ Đang khởi chạy tp.lua...")
 
@@ -15,9 +15,6 @@ local successName, gameInfo = pcall(function()
 end)
 local isTargetGame = (game.PlaceId == 10033751448)
 
--- =================================================================
--- KHỞI TẠO GIAO DIỆN (GUI)
--- =================================================================
 if playerGui:FindFirstChild("TeleportGUI") then
     playerGui.TeleportGUI:Destroy()
 end
@@ -51,9 +48,29 @@ title.Font = Enum.Font.GothamBold
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = frame
 
--- =================================================================
--- NÚT THU NHỎ / MỞ RỘNG BIẾN THÀNH LOGO TRÒN "agg2"
--- =================================================================
+-- Logo nổi độc lập khi thu nhỏ
+local floatingLogo = Instance.new("TextButton")
+floatingLogo.Size = UDim2.new(0, 35, 0, 35)
+floatingLogo.Position = UDim2.new(0, 50, 0, 50)
+floatingLogo.BackgroundColor3 = Color3.fromRGB(100, 50, 180)
+floatingLogo.Text = "agg2"
+floatingLogo.TextColor3 = Color3.fromRGB(255, 255, 255)
+floatingLogo.TextSize = 10
+floatingLogo.Font = Enum.Font.GothamBold
+floatingLogo.Visible = false
+floatingLogo.Active = true
+floatingLogo.Draggable = true
+floatingLogo.Parent = screenGui
+
+local fLogoCorner = Instance.new("UICorner")
+fLogoCorner.CornerRadius = UDim.new(1, 0)
+fLogoCorner.Parent = floatingLogo
+
+local fLogoStroke = Instance.new("UIStroke")
+fLogoStroke.Color = Color3.fromRGB(255, 255, 255)
+fLogoStroke.Thickness = 2
+fLogoStroke.Parent = floatingLogo
+
 local logoBtn = Instance.new("TextButton")
 logoBtn.Size = UDim2.new(0, 26, 0, 26)
 logoBtn.Position = UDim2.new(1, -30, 0, 3)
@@ -116,11 +133,9 @@ end
 
 local currentY = 2
 
--- 0. NÚT CHUYỂN NGÔN NGỮ US/VN TRONG MENU TP
 local toggleRegionTPBtn = createButton("RegionBtn", "🇻🇳 Khu vực: VN (Tiếng Việt)", currentY, Color3.fromRGB(0, 100, 200))
 currentY = currentY + 32
 
--- 1. TELEPORT SECTION
 local tpSectionLbl = createSubLabel("⚡ HỆ THỐNG TELEPORT", currentY)
 currentY = currentY + 20
 
@@ -136,7 +151,6 @@ local function executeTeleport(targetCFrame)
             oldPosition = rootPart.CFrame
             isTeleported = true
         end
-        
         rootPart.Anchored = true
         rootPart.CFrame = targetCFrame
         task.wait(0.3)
@@ -186,7 +200,6 @@ backBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 2. DỊCH CHAT
 local chatSectionLbl = createSubLabel("🌐 DỊCH CHAT (MYMEMORY API)", currentY)
 local chatBox = Instance.new("TextBox")
 chatBox.Size = UDim2.new(0.95, 0, 0, 26)
@@ -241,7 +254,6 @@ translateBtn.MouseButton1Click:Connect(function()
             end
             return nil
         end)
-        
         if success and result and result ~= "" then
             resultBox.Text = result
         else
@@ -260,7 +272,6 @@ copyBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 3. ADMIN & EXTRA SCRIPTS
 local extraSectionLbl = createSubLabel("🛠️ SCRIPT KHÁC", currentY)
 local adminBtn = createButton("Admin", "👑 Nameless Admin (New)", currentY + 20, Color3.fromRGB(255, 140, 0))
 local invisBtn = createButton("InvisBtn", "👻 Invisible Man", currentY + 48, Color3.fromRGB(130, 80, 220))
@@ -274,7 +285,6 @@ invisBtn.MouseButton1Click:Connect(function()
     pcall(function() loadstring(game:HttpGet("https://scriptblox.com/raw/Universal-Script-Awesome-Invisible-man-133400"))() end)
 end)
 
--- 4. KURDISH ANIMATIONS SECTION
 local animSectionLbl = createSubLabel("💃 KURDISH ANIMATIONS (FULL)", currentY)
 currentY = currentY + 20
 
@@ -308,19 +318,15 @@ local function setupAnimations(character)
     local normalColor = Color3.fromRGB(180, 140, 60)
     local activeColor = Color3.fromRGB(230, 180, 70)
 
-    for _, btn in pairs(animButtons) do
-        btn:Destroy()
-    end
+    for _, btn in pairs(animButtons) do btn:Destroy() end
     animButtons = {}
 
     local startY = currentY
     for _, animData in ipairs(fullAnimList) do
         local animName, animId, isLoop, speed = animData[1], animData[2], animData[3], animData[4]
-        
         local animObj = Instance.new("Animation")
         animObj.AnimationId = "rbxassetid://" .. animId
         local track = humanoid:LoadAnimation(animObj)
-        
         track.Priority = Enum.AnimationPriority.Action4
         
         local btn = createButton("Anim_" .. animName, animName, startY, normalColor)
@@ -333,7 +339,6 @@ local function setupAnimations(character)
             if isPlaying then
                 btn.BackgroundColor3 = activeColor
                 if animName == "Sit" then humanoid.Sit = true end
-                
                 if isLoop then
                     task.spawn(function()
                         while isPlaying and humanoid.Health > 0 do
@@ -351,20 +356,12 @@ local function setupAnimations(character)
             end
         end)
     end
-    
     scroll.CanvasSize = UDim2.new(0, 0, 0, startY + 30)
 end
 
-if localPlayer.Character then
-	setupAnimations(localPlayer.Character)
-end
+if localPlayer.Character then setupAnimations(localPlayer.Character) end
+localPlayer.CharacterAdded:Connect(function(char) task.wait(0.5); setupAnimations(char) end)
 
-localPlayer.CharacterAdded:Connect(function(char)
-	task.wait(0.5)
-	setupAnimations(char)
-end)
-
--- LOGIC CHUYỂN NGÔN NGỮ US/VN CHO TP SCRIPT
 toggleRegionTPBtn.MouseButton1Click:Connect(function()
     isUSModeTP = not isUSModeTP
     if isUSModeTP then
@@ -394,17 +391,16 @@ toggleRegionTPBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- LOGIC THU NHỎ / MỞ RỘNG BẰNG LOGO TRÒN "agg2"
-local isMinimized = false
 logoBtn.MouseButton1Click:Connect(function()
-    isMinimized = not isMinimized
-    if isMinimized then
-        frame.Size = UDim2.new(0, 240, 0, 35)
-        scroll.Visible = false
-    else
-        frame.Size = UDim2.new(0, 240, 0, 465)
-        scroll.Visible = true
-    end
+    frame.Visible = false
+    floatingLogo.Position = frame.Position
+    floatingLogo.Visible = true
 end)
 
-print("🎉 Khởi chạy thành công tp.lua bản chuẩn có logo tròn agg2 và US/VN!")
+floatingLogo.MouseButton1Click:Connect(function()
+    frame.Position = floatingLogo.Position
+    floatingLogo.Visible = false
+    frame.Visible = true
+end)
+
+print("🎉 Khởi chạy thành công tp.lua bản chuẩn logo nổi độc lập!")
