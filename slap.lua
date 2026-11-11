@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT SLAP.LUA - CẬP NHẬT ĐƯỜNG DẪN HUGBUTTONS CHUẨN XÁC
+-- SCRIPT SLAP.LUA - KÍCH HOẠT DUY NHẤT HUGBUTTONS ĐỂ THẢ
 -- =================================================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -233,7 +233,7 @@ local btnCornerG2 = Instance.new("UICorner")
 btnCornerG2.CornerRadius = UDim.new(0, 6)
 btnCornerG2.Parent = autoGrabAllBtn
 
--- NÚT AUTO KILL ALL (TP BỤC + GRAB & THẢ + VỀ VỊ TRÍ CŨ KHI TẮT)
+-- NÚT AUTO KILL ALL
 local autoKillAllBtn = Instance.new("TextButton")
 autoKillAllBtn.Size = UDim2.new(0.9, 0, 0, 28)
 autoKillAllBtn.Position = UDim2.new(0.05, 0, 0, 298)
@@ -293,7 +293,7 @@ local isFastCaseRunning = false
 local isAutoGrabAllRunning = false
 local isAutoKillAllRunning = false
 
-local originalPosition = nil -- Lưu vị trí cũ trước khi TP đến bục
+local originalPosition = nil
 
 local detectedPlayerName = nil
 local lastGuessFiredTime = 0
@@ -328,54 +328,56 @@ local function removePlatform()
     end
 end
 
--- HÀM CHECK HUGBUTTONS (ĐƯỜNG DẪN CHUẨN: NewUI.HugButtons)
+-- LẤY ĐỐI TƯỢNG HUGBUTTONS CHUẨN XÁC: NewUI.HugButtons
 local function getHugButtonsGui()
     local pGui = localPlayer:FindFirstChild("PlayerGui")
     local newUI = pGui and pGui:FindFirstChild("NewUI")
     return newUI and newUI:FindFirstChild("HugButtons")
 end
 
+-- Kiểm tra xem HugButtons có đang hiện không
 local function isHugButtonsVisible()
-    local hugButtons = getHugButtonsGui()
-    if hugButtons then
-        if hugButtons:IsA("GuiObject") and hugButtons.Visible and hugButtons.AbsoluteSize.X > 0 then
+    local hugBtn = getHugButtonsGui()
+    if hugBtn then
+        if hugBtn:IsA("GuiObject") and hugBtn.Visible and hugBtn.AbsoluteSize.X > 0 then
             return true
-        end
-        for _, child in ipairs(hugButtons:GetDescendants()) do
-            if child:IsA("GuiObject") and child.Visible and child.AbsoluteSize.X > 0 then
-                return true
-            end
         end
     end
     return false
 end
 
--- HÀM KÍCH HOẠT NÚT THẢ TRONG HUGBUTTONS
+-- KÍCH HOẠT ĐÚNG NÚT HUGBUTTONS ĐỂ THẢ
 local function triggerReleaseButton()
     pcall(function()
-        local hugButtons = getHugButtonsGui()
-        if hugButtons then
-            for _, btn in ipairs(hugButtons:GetDescendants()) do
-                if (btn:IsA("TextButton") or btn:IsA("ImageButton")) and btn.Visible then
-                    if getconnections then
-                        for _, conn in pairs(getconnections(btn.MouseButton1Click)) do conn:Fire() end
-                        for _, conn in pairs(getconnections(btn.Activated)) do conn:Fire() end
-                    else
-                        btn:Activate()
-                    end
-                end
+        local hugBtn = getHugButtonsGui()
+        if hugBtn and hugBtn:IsA("GuiObject") then
+            if getconnections then
+                for _, conn in pairs(getconnections(hugBtn.MouseButton1Click)) do conn:Fire() end
+                for _, conn in pairs(getconnections(hugBtn.Activated)) do conn:Fire() end
+                for _, conn in pairs(getconnections(hugBtn.MouseButton1Down)) do conn:Fire() end
+            else
+                hugBtn:Activate()
             end
         end
     end)
 end
 
--- HÀM GRAB VÀ THẢ
+-- HÀM GRAB & THẢ (ĐỢI KHI NÀO HUGBUTTONS ẨN THÌ MỚI GRAB TIẾP)
 local function grabAndReleaseTarget(targetChar)
     if not targetChar then return false end
+    
+    -- Khi nút HugButtons đang hiện -> ĐỢI ĐẾN KHI ẨN HẲN MỚI THỰC THI
+    while isHugButtonsVisible() do
+        task.wait(0.2)
+        if not isAutoKillAllRunning and not isAutoGrabAllRunning then return false end
+    end
+    
     return pcall(function()
         if hugRequestRemote then
+            -- 1. Gửi lệnh tryGrab
             hugRequestRemote:FireServer("tryGrab", targetChar)
             task.wait(0.4)
+            -- 2. Kích hoạt nút HugButtons để thả
             triggerReleaseButton()
         end
     end)
@@ -395,7 +397,9 @@ grabBtn.MouseButton1Click:Connect(function()
     end
     
     if targetP and targetP.Character then
-        grabAndReleaseTarget(targetP.Character)
+        task.spawn(function()
+            grabAndReleaseTarget(targetP.Character)
+        end)
         infoStatusLabel.Text = "🪝 Đã Grab & Thả: " .. targetP.Name
         infoStatusLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
     else
@@ -420,7 +424,7 @@ autoGrabAllBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- TOGGLE AUTO KILL ALL (LƯU VỊ TRÍ CŨ -> TP BỤC -> KHI TẮT TP VỀ VỊ TRÍ CŨ)
+-- TOGGLE AUTO KILL ALL
 autoKillAllBtn.MouseButton1Click:Connect(function()
     isAutoKillAllRunning = not isAutoKillAllRunning
     if isAutoKillAllRunning then
@@ -429,7 +433,6 @@ autoKillAllBtn.MouseButton1Click:Connect(function()
         infoStatusLabel.Text = "⚔️ Đã TP tới bục & bắt đầu Auto Kill All..."
         infoStatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
         
-        -- Lưu lại vị trí cũ trước khi Teleport đến bục
         pcall(function()
             local char = localPlayer.Character
             local root = char and char:FindFirstChild("HumanoidRootPart")
@@ -454,7 +457,6 @@ autoKillAllBtn.MouseButton1Click:Connect(function()
         
         removePlatform()
         
-        -- Teleport trả về vị trí cũ khi tắt
         pcall(function()
             if originalPosition then
                 local char = localPlayer.Character
@@ -468,7 +470,7 @@ autoKillAllBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- LOOP AUTO KILL ALL (TP BỤC + GRAB & THẢ LIÊN TỤC)
+-- LOOP AUTO KILL ALL
 task.spawn(function()
     while true do
         task.wait(0.3)
@@ -483,12 +485,6 @@ task.spawn(function()
                     end
                 end
 
-                if isHugButtonsVisible() then
-                    while isHugButtonsVisible() and isAutoKillAllRunning do
-                        task.wait(0.2)
-                    end
-                end
-
                 if isAutoKillAllRunning then
                     for _, p in ipairs(Players:GetPlayers()) do
                         if not isAutoKillAllRunning then break end
@@ -500,13 +496,7 @@ task.spawn(function()
                                 infoStatusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
                                 
                                 grabAndReleaseTarget(p.Character)
-                                task.wait(0.5)
-                                
-                                if isHugButtonsVisible() then
-                                    while isHugButtonsVisible() and isAutoKillAllRunning do
-                                        task.wait(0.2)
-                                    end
-                                end
+                                task.wait(0.2)
                             end
                         end
                     end
@@ -522,12 +512,6 @@ task.spawn(function()
         task.wait(0.3)
         if isAutoGrabAllRunning and not isAutoKillAllRunning then
             pcall(function()
-                if isHugButtonsVisible() then
-                    while isHugButtonsVisible() and isAutoGrabAllRunning do
-                        task.wait(0.2)
-                    end
-                end
-
                 if isAutoGrabAllRunning then
                     for _, p in ipairs(Players:GetPlayers()) do
                         if not isAutoGrabAllRunning then break end
@@ -535,12 +519,7 @@ task.spawn(function()
                             local pHum = p.Character:FindFirstChildOfClass("Humanoid")
                             if pHum and pHum.Health > 0 then
                                 grabAndReleaseTarget(p.Character)
-                                task.wait(0.4)
-                                if isHugButtonsVisible() then
-                                    while isHugButtonsVisible() and isAutoGrabAllRunning do
-                                        task.wait(0.2)
-                                    end
-                                end
+                                task.wait(0.2)
                             end
                         end
                     end
@@ -762,4 +741,4 @@ task.spawn(function()
     end
 end)
 
-print("✅ Đã cập nhật xong đường dẫn NewUI.HugButtons cho toàn bộ script slap.lua!")
+print("✅ Đã cập nhật xong: Chỉ kích hoạt trực tiếp vào HugButtons!")
