@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT SLAP.LUA - CÓ NÚT CHUYỂN US/VN
+-- SCRIPT SLAP.LUA - ĐÃ FIX ĐỔI TÊN NÚT KHI CHUYỂN US/VN
 -- =================================================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -7,18 +7,13 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local localPlayer = Players.LocalPlayer
 local playerGui = localPlayer:WaitForChild("PlayerGui")
 
--- Xóa GUI cũ nếu đã tồn tại
-if playerGui:FindFirstChild("BehindDetectorGUI") then
-    playerGui.BehindDetectorGUI:Destroy()
-end
+if playerGui:FindFirstChild("BehindDetectorGUI") then playerGui.BehindDetectorGUI:Destroy() end
 
--- Tạo ScreenGui
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "BehindDetectorGUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
--- Tạo khung chính (tăng chiều cao một chút để chứa nút mới)
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 240, 0, 310)
 frame.Position = UDim2.new(0.72, 0, 0.15, 0)
@@ -32,7 +27,6 @@ local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 8)
 corner.Parent = frame
 
--- Tiêu đề
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 30)
 title.Position = UDim2.new(0, 0, 0, 0)
@@ -48,7 +42,6 @@ local titleCorner = Instance.new("UICorner")
 titleCorner.CornerRadius = UDim.new(0, 8)
 titleCorner.Parent = title
 
--- NÚT THU NHỎ / MỞ RỘNG (-)
 local minimizeBtn = Instance.new("TextButton")
 minimizeBtn.Size = UDim2.new(0, 26, 0, 22)
 minimizeBtn.Position = UDim2.new(1, -28, 0, 4)
@@ -63,12 +56,10 @@ local minBtnCorner = Instance.new("UICorner")
 minBtnCorner.CornerRadius = UDim.new(0, 4)
 minBtnCorner.Parent = minimizeBtn
 
--- Container chứa các thành phần để ẩn/hiện khi thu nhỏ
 local contentContainer = Instance.new("Folder")
 contentContainer.Name = "ContentContainer"
 contentContainer.Parent = frame
 
--- Nhãn trạng thái dò người phía sau
 local statusLabel = Instance.new("TextLabel")
 statusLabel.Size = UDim2.new(0.9, 0, 0, 28)
 statusLabel.Position = UDim2.new(0.05, 0, 0, 35)
@@ -80,7 +71,6 @@ statusLabel.Font = Enum.Font.GothamBold
 statusLabel.TextWrapped = true
 statusLabel.Parent = contentContainer
 
--- 1. Nút Bật/Tắt Dò Phía Sau
 local toggleBehindBtn = Instance.new("TextButton")
 toggleBehindBtn.Size = UDim2.new(0.9, 0, 0, 24)
 toggleBehindBtn.Position = UDim2.new(0.05, 0, 0, 68)
@@ -95,7 +85,6 @@ local btnCorner1 = Instance.new("UICorner")
 btnCorner1.CornerRadius = UDim.new(0, 6)
 btnCorner1.Parent = toggleBehindBtn
 
--- 2. Nút Bật/Tắt Auto Slap
 local toggleSlapBtn = Instance.new("TextButton")
 toggleSlapBtn.Size = UDim2.new(0.9, 0, 0, 24)
 toggleSlapBtn.Position = UDim2.new(0.05, 0, 0, 96)
@@ -110,7 +99,6 @@ local btnCorner2 = Instance.new("UICorner")
 btnCorner2.CornerRadius = UDim.new(0, 6)
 btnCorner2.Parent = toggleSlapBtn
 
--- 3. Nút Bật/Tắt Auto Đoán
 local toggleAutoGuessBtn = Instance.new("TextButton")
 toggleAutoGuessBtn.Size = UDim2.new(0.9, 0, 0, 24)
 toggleAutoGuessBtn.Position = UDim2.new(0.05, 0, 0, 124)
@@ -125,7 +113,6 @@ local btnCorner3 = Instance.new("UICorner")
 btnCorner3.CornerRadius = UDim.new(0, 6)
 btnCorner3.Parent = toggleAutoGuessBtn
 
--- 4. Ô nhập giá trị Auto Đo
 local customMeterInput = Instance.new("TextBox")
 customMeterInput.Size = UDim2.new(0.55, 0, 0, 24)
 customMeterInput.Position = UDim2.new(0.05, 0, 0, 152)
@@ -142,7 +129,6 @@ local inputCorner = Instance.new("UICorner")
 inputCorner.CornerRadius = UDim.new(0, 6)
 inputCorner.Parent = customMeterInput
 
--- Nút Bật/Tắt Auto Đo
 local toggleAutoMeterBtn = Instance.new("TextButton")
 toggleAutoMeterBtn.Size = UDim2.new(0.32, 0, 0, 24)
 toggleAutoMeterBtn.Position = UDim2.new(0.63, 0, 0, 152)
@@ -157,12 +143,11 @@ local btnCorner4 = Instance.new("UICorner")
 btnCorner4.CornerRadius = UDim.new(0, 6)
 btnCorner4.Parent = toggleAutoMeterBtn
 
--- 5. NÚT CHUYỂN US/VN
 local toggleRegionBtn = Instance.new("TextButton")
 toggleRegionBtn.Size = UDim2.new(0.9, 0, 0, 26)
 toggleRegionBtn.Position = UDim2.new(0.05, 0, 0, 182)
 toggleRegionBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
-toggleRegionBtn.Text = "🌍 Khu vực: VN (Tiếng Việt)"
+toggleRegionBtn.Text = "🇻🇳 Khu vực: VN (Tiếng Việt)"
 toggleRegionBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 toggleRegionBtn.TextSize = 10
 toggleRegionBtn.Font = Enum.Font.GothamBold
@@ -172,9 +157,8 @@ local btnCornerRegion = Instance.new("UICorner")
 btnCornerRegion.CornerRadius = UDim.new(0, 6)
 btnCornerRegion.Parent = toggleRegionBtn
 
--- Thông báo trạng thái chi tiết
 local infoStatusLabel = Instance.new("TextLabel")
-infoStatusLabel.Size = UDim2.new(0.9, 0, 0, 65)
+infoStatusLabel.Size = UDim2.new(0.9, 0, 0, 60)
 infoStatusLabel.Position = UDim2.new(0.05, 0, 0, 214)
 infoStatusLabel.BackgroundTransparency = 1
 infoStatusLabel.Text = "Trạng thái: Sẵn sàng"
@@ -184,7 +168,6 @@ infoStatusLabel.Font = Enum.Font.Gotham
 infoStatusLabel.TextWrapped = true
 infoStatusLabel.Parent = contentContainer
 
--- LOGIC THU NHỎ / MỞ RỘNG
 local isMinimized = false
 minimizeBtn.MouseButton1Click:Connect(function()
     isMinimized = not isMinimized
@@ -192,22 +175,17 @@ minimizeBtn.MouseButton1Click:Connect(function()
         minimizeBtn.Text = "+"
         frame.Size = UDim2.new(0, 240, 0, 30)
         for _, child in ipairs(contentContainer:GetChildren()) do
-            if child:IsA("GuiObject") then
-                child.Visible = false
-            end
+            if child:IsA("GuiObject") then child.Visible = false end
         end
     else
         minimizeBtn.Text = "-"
         frame.Size = UDim2.new(0, 240, 0, 310)
         for _, child in ipairs(contentContainer:GetChildren()) do
-            if child:IsA("GuiObject") then
-                child.Visible = true
-            end
+            if child:IsA("GuiObject") then child.Visible = true end
         end
     end
 end)
 
--- HỆ THỐNG CHÍNH
 math.randomseed(tick())
 local isBehindRunning = true
 local isAutoSlapRunning = false
@@ -220,7 +198,6 @@ local lastGuessFiredTime = 0
 local meterStartTime = nil
 local hasFiredMeter = false
 
--- 1. Toggle Dò Phía Sau
 toggleBehindBtn.MouseButton1Click:Connect(function()
     isBehindRunning = not isBehindRunning
     if isBehindRunning then
@@ -230,11 +207,9 @@ toggleBehindBtn.MouseButton1Click:Connect(function()
         toggleBehindBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
         toggleBehindBtn.Text = isUSMode and "Behind Detector: OFF" or "Dò Phía Sau: TẮT"
         statusLabel.Text = isUSMode and "Scanning stopped." or "Đã dừng dò tìm."
-        statusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
     end
 end)
 
--- 2. Toggle Auto Slap
 toggleSlapBtn.MouseButton1Click:Connect(function()
     isAutoSlapRunning = not isAutoSlapRunning
     if isAutoSlapRunning then
@@ -246,7 +221,6 @@ toggleSlapBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 3. Toggle Auto Đoán
 toggleAutoGuessBtn.MouseButton1Click:Connect(function()
     isAutoGuessRunning = not isAutoGuessRunning
     if isAutoGuessRunning then
@@ -258,7 +232,6 @@ toggleAutoGuessBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 4. Toggle Auto Đo
 toggleAutoMeterBtn.MouseButton1Click:Connect(function()
     isAutoMeterRunning = not isAutoMeterRunning
     if isAutoMeterRunning then
@@ -274,140 +247,98 @@ toggleAutoMeterBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 5. LOGIC CHUYỂN US/VN
 toggleRegionBtn.MouseButton1Click:Connect(function()
     isUSMode = not isUSMode
     if isUSMode then
         toggleRegionBtn.Text = "🇺🇸 Region: US (English)"
         title.Text = "  👀 BEHIND & AUTO SLAP"
-        infoStatusLabel.Text = "Status: Switched to English (US)"
+        toggleBehindBtn.Text = isBehindRunning and "Behind Detector: ON" or "Behind Detector: OFF"
+        toggleSlapBtn.Text = isAutoSlapRunning and "Auto Slap: ON" or "Auto Slap: OFF"
+        toggleAutoGuessBtn.Text = isAutoGuessRunning and "Auto Guess: ON" or "Auto Guess: OFF"
+        toggleAutoMeterBtn.Text = isAutoMeterRunning and "Meter: ON" or "Meter: OFF"
+        customMeterInput.PlaceholderText = "Enter value..."
+        infoStatusLabel.Text = "Status: English mode"
     else
         toggleRegionBtn.Text = "🇻🇳 Khu vực: VN (Tiếng Việt)"
         title.Text = "  👀 DÒ SAU & AUTO SLAP"
-        infoStatusLabel.Text = "Trạng thái: Đã chuyển sang Tiếng Việt (VN)"
+        toggleBehindBtn.Text = isBehindRunning and "Dò Phía Sau: BẬT" or "Dò Phía Sau: TẮT"
+        toggleSlapBtn.Text = isAutoSlapRunning and "Auto Slap: BẬT" or "Auto Slap: TẮT"
+        toggleAutoGuessBtn.Text = isAutoGuessRunning and "Auto Đoán: BẬT" or "Auto Đoán: TẮT"
+        toggleAutoMeterBtn.Text = isAutoMeterRunning and "Đo: BẬT" or "Đo: TẮT"
+        customMeterInput.PlaceholderText = "Nhập giá trị..."
+        infoStatusLabel.Text = "Trạng thái: Tiếng Việt"
     end
 end)
 
--- LOOP 1: DÒ NGƯỜI PHÍA SAU
 RunService.RenderStepped:Connect(function()
     if not isBehindRunning then return end
-    
     local character = localPlayer.Character
     local rootPart = character and character:FindFirstChild("HumanoidRootPart")
-    
     if not rootPart then
         statusLabel.Text = isUSMode and "Character not found!" or "Không tìm thấy nhân vật!"
-        statusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
         detectedPlayerName = nil
         return
     end
-    
     local myPos = rootPart.Position
     local myLookVec = rootPart.CFrame.LookVector
     local closestPlayer = nil
     local minDistance = 35
-    
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= localPlayer and player.Character then
             local otherRoot = player.Character:FindFirstChild("HumanoidRootPart")
             local otherHumanoid = player.Character:FindFirstChild("Humanoid")
-            
             if otherRoot and otherHumanoid and otherHumanoid.Health > 0 then
-                local otherPos = otherRoot.Position
-                local dirToOther = (otherPos - myPos).Unit
-                local dotProduct = myLookVec:Dot(dirToOther)
-                local distance = (otherPos - myPos).Magnitude
-                
-                if dotProduct < -0.2 and distance < minDistance then
+                local distance = (otherRoot.Position - myPos).Magnitude
+                if myLookVec:Dot((otherRoot.Position - myPos).Unit) < -0.2 and distance < minDistance then
                     minDistance = distance
                     closestPlayer = player.Name
                 end
             end
         end
     end
-    
     if closestPlayer then
         detectedPlayerName = closestPlayer
-        if isUSMode then
-            statusLabel.Text = string.format("⚠️ [%s] is behind you!\nDistance: %.1f studs", closestPlayer, minDistance)
-        else
-            statusLabel.Text = string.format("⚠️ Có [%s] phía sau!\nKhoảng cách: %.1f studs", closestPlayer, minDistance)
-        end
-        statusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
+        statusLabel.Text = isUSMode and string.format("⚠️ [%s] is behind!\nDist: %.1f studs", closestPlayer, minDistance) or string.format("⚠️ Có [%s] phía sau!\nKhoảng cách: %.1f studs", closestPlayer, minDistance)
     else
         detectedPlayerName = nil
         statusLabel.Text = isUSMode and "✅ Safe: Behind is clear." or "✅ An toàn: Phía sau trống."
-        statusLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
     end
 end)
 
--- LOOP 2: AUTO SLAP
 task.spawn(function()
     while true do
-        local randomDelay = math.random(200, 400) / 1000
-        task.wait(randomDelay)
-        
+        task.wait(math.random(200, 400) / 1000)
         if isAutoSlapRunning then
             pcall(function()
-                local pGui = localPlayer:FindFirstChild("PlayerGui")
-                local sGui = pGui and pGui:FindFirstChild("ScreenGui")
-                local slapBtn = sGui and sGui:FindFirstChild("slapbut")
-                
-                if slapBtn and slapBtn:IsA("GuiObject") and slapBtn.Visible and slapBtn.AbsoluteSize.X > 0 then
-                    if getconnections then
-                        for _, connection in pairs(getconnections(slapBtn.MouseButton1Click)) do
-                            connection:Fire()
-                        end
-                    else
-                        slapBtn:Activate()
-                    end
-                end
+                local slapBtn = playerGui:FindFirstChild("ScreenGui") and playerGui.ScreenGui:FindFirstChild("slapbut")
+                if slapBtn and slapBtn.Visible then slapBtn:Activate() end
             end)
         end
     end
 end)
 
--- LOOP 3: AUTO ĐOÁN
 task.spawn(function()
     while true do
         task.wait(0.05)
-        if isAutoGuessRunning then
-            pcall(function()
-                local pGui = localPlayer:FindFirstChild("PlayerGui")
-                local sGui = pGui and pGui:FindFirstChild("ScreenGui")
-                local suspectsGui = sGui and sGui:FindFirstChild("suspects")
-                
-                if suspectsGui and (tick() - lastGuessFiredTime > 1.0) then
-                    if detectedPlayerName then
-                        lastGuessFiredTime = tick()
-                        local guessEvent = ReplicatedStorage:FindFirstChild("events") and ReplicatedStorage.events:FindFirstChild("Guess")
-                        if guessEvent then guessEvent:FireServer(detectedPlayerName) end
-                    end
-                end
-            end)
+        if isAutoGuessRunning and detectedPlayerName and (tick() - lastGuessFiredTime > 1.0) then
+            lastGuessFiredTime = tick()
+            pcall(function() ReplicatedStorage.events.Guess:FireServer(detectedPlayerName) end)
         end
     end
 end)
 
--- LOOP 4: AUTO ĐO
 task.spawn(function()
     while true do
         task.wait(0.05)
         if isAutoMeterRunning then
             pcall(function()
-                local pGui = localPlayer:FindFirstChild("PlayerGui")
-                local sGui = pGui and pGui:FindFirstChild("ScreenGui")
-                local meterGui = sGui and sGui:FindFirstChild("meter")
-                
+                local meterGui = playerGui:FindFirstChild("ScreenGui") and playerGui.ScreenGui:FindFirstChild("meter")
                 if meterGui then
                     if not hasFiredMeter then
-                        if not meterStartTime then
-                            meterStartTime = tick()
+                        if not meterStartTime then meterStartTime = tick()
                         elseif tick() - meterStartTime >= 1.89 then
                             hasFiredMeter = true
-                            local customVal = tonumber(customMeterInput.Text) or 1
-                            local sendSlapEvent = ReplicatedStorage:FindFirstChild("events") and ReplicatedStorage.events:FindFirstChild("SendSlap")
-                            if sendSlapEvent then sendSlapEvent:FireServer(customVal) end
+                            ReplicatedStorage.events.SendSlap:FireServer(tonumber(customMeterInput.Text) or 1)
                         end
                     end
                 else
@@ -421,5 +352,3 @@ task.spawn(function()
         end
     end
 end)
-
-print("✅ slap.lua loaded with US/VN toggle!")
