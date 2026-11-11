@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT SLAP.LUA - KÍCH HOẠT DUY NHẤT HUGBUTTONS ĐỂ THẢ
+-- SCRIPT SLAP.LUA - TỐI ƯU HÓA GRAB & THẢ THÔNG MINH (TIME-OUT 1S & SKIP)
 -- =================================================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -346,7 +346,7 @@ local function isHugButtonsVisible()
     return false
 end
 
--- KÍCH HOẠT ĐÚNG NÚT HUGBUTTONS ĐỂ THẢ
+-- KÍCH HOẠT DUY NHẤT NÚT HUGBUTTONS ĐỂ THẢ
 local function triggerReleaseButton()
     pcall(function()
         local hugBtn = getHugButtonsGui()
@@ -362,25 +362,48 @@ local function triggerReleaseButton()
     end)
 end
 
--- HÀM GRAB & THẢ (ĐỢI KHI NÀO HUGBUTTONS ẨN THÌ MỚI GRAB TIẾP)
+-- HÀM GRAB & THẢ THÔNG MINH (TIME-OUT 1S & SKIP NẾU KHÔNG HIỆN NÚT)
 local function grabAndReleaseTarget(targetChar)
     if not targetChar then return false end
     
-    -- Khi nút HugButtons đang hiện -> ĐỢI ĐẾN KHI ẨN HẲN MỚI THỰC THI
+    -- Đảm bảo không bận trước khi grab
     while isHugButtonsVisible() do
         task.wait(0.2)
         if not isAutoKillAllRunning and not isAutoGrabAllRunning then return false end
     end
     
-    return pcall(function()
+    local success = pcall(function()
         if hugRequestRemote then
             -- 1. Gửi lệnh tryGrab
             hugRequestRemote:FireServer("tryGrab", targetChar)
-            task.wait(0.4)
-            -- 2. Kích hoạt nút HugButtons để thả
-            triggerReleaseButton()
         end
     end)
+    
+    if not success then return false end
+    
+    -- 2. Chờ 0.5s để game phản hồi
+    task.wait(0.5)
+    
+    -- 3. Kiểm tra trong vòng 1s xem nút HugButtons có hiện lên không
+    local timeoutTick = tick()
+    local buttonAppeared = false
+    
+    while (tick() - timeoutTick < 1.0) do
+        if isHugButtonsVisible() then
+            buttonAppeared = true
+            break
+        end
+        task.wait(0.05)
+    end
+    
+    -- 4. Nếu nút hiện lên -> Tiến hành Thả. Nếu KHÔNG hiện trong 1s -> Skip qua player khác luôn!
+    if buttonAppeared then
+        triggerReleaseButton()
+        task.wait(0.2)
+        return true
+    else
+        return false -- Skip player này
+    end
 end
 
 -- NÚT GRAB ĐƠN
@@ -473,7 +496,7 @@ end)
 -- LOOP AUTO KILL ALL
 task.spawn(function()
     while true do
-        task.wait(0.3)
+        task.wait(0.2)
         if isAutoKillAllRunning then
             pcall(function()
                 local char = localPlayer.Character
@@ -492,11 +515,10 @@ task.spawn(function()
                         if p ~= localPlayer and p.Character then
                             local pHum = p.Character:FindFirstChildOfClass("Humanoid")
                             if pHum and pHum.Health > 0 then
-                                infoStatusLabel.Text = "⚔️ Đang Kill All: " .. p.Name
+                                infoStatusLabel.Text = "⚔️ Đang thử Grab: " .. p.Name
                                 infoStatusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
                                 
                                 grabAndReleaseTarget(p.Character)
-                                task.wait(0.2)
                             end
                         end
                     end
@@ -509,7 +531,7 @@ end)
 -- LOOP AUTO GRAB ALL THƯỜNG
 task.spawn(function()
     while true do
-        task.wait(0.3)
+        task.wait(0.2)
         if isAutoGrabAllRunning and not isAutoKillAllRunning then
             pcall(function()
                 if isAutoGrabAllRunning then
@@ -519,7 +541,6 @@ task.spawn(function()
                             local pHum = p.Character:FindFirstChildOfClass("Humanoid")
                             if pHum and pHum.Health > 0 then
                                 grabAndReleaseTarget(p.Character)
-                                task.wait(0.2)
                             end
                         end
                     end
@@ -715,7 +736,7 @@ task.spawn(function()
         if isAutoMeterRunning then
             pcall(function()
                 local pGui = localPlayer:FindFirstChild("PlayerGui")
-                local sGui = pGui and pGui:FindFirstChild("ScreenGui")
+                local sGui = pGui and sGui:FindFirstChild("ScreenGui")
                 local meterGui = sGui and sGui:FindFirstChild("meter")
                 
                 if meterGui then
@@ -741,4 +762,4 @@ task.spawn(function()
     end
 end)
 
-print("✅ Đã cập nhật xong: Chỉ kích hoạt trực tiếp vào HugButtons!")
+print("✅ Đã chạy script By Trung And AI Gemini, secret nha!")
