@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT SLAP.LUA - ĐÃ FIX ĐỔI TÊN NÚT KHI CHUYỂN US/VN
+-- SCRIPT SLAP.LUA - CÓ LOGO TRÒN "agg2" & ĐỔI TÊN US/VN
 -- =================================================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -42,19 +42,25 @@ local titleCorner = Instance.new("UICorner")
 titleCorner.CornerRadius = UDim.new(0, 8)
 titleCorner.Parent = title
 
-local minimizeBtn = Instance.new("TextButton")
-minimizeBtn.Size = UDim2.new(0, 26, 0, 22)
-minimizeBtn.Position = UDim2.new(1, -28, 0, 4)
-minimizeBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-minimizeBtn.Text = "-"
-minimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-minimizeBtn.TextSize = 14
-minimizeBtn.Font = Enum.Font.GothamBold
-minimizeBtn.Parent = frame
+-- LOGO TRÒN "agg2" THU NHỎ / MỞ RỘNG
+local logoBtn = Instance.new("TextButton")
+logoBtn.Size = UDim2.new(0, 26, 0, 26)
+logoBtn.Position = UDim2.new(1, -28, 0, 2)
+logoBtn.BackgroundColor3 = Color3.fromRGB(255, 150, 0)
+logoBtn.Text = "agg2"
+logoBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+logoBtn.TextSize = 8
+logoBtn.Font = Enum.Font.GothamBold
+logoBtn.Parent = frame
 
-local minBtnCorner = Instance.new("UICorner")
-minBtnCorner.CornerRadius = UDim.new(0, 4)
-minBtnCorner.Parent = minimizeBtn
+local logoCorner = Instance.new("UICorner")
+logoCorner.CornerRadius = UDim.new(1, 0)
+logoBtn.Parent = frame
+
+local logoStroke = Instance.new("UIStroke")
+logoStroke.Color = Color3.fromRGB(255, 255, 255)
+logoStroke.Thickness = 1.5
+logoStroke.Parent = logoBtn
 
 local contentContainer = Instance.new("Folder")
 contentContainer.Name = "ContentContainer"
@@ -169,16 +175,14 @@ infoStatusLabel.TextWrapped = true
 infoStatusLabel.Parent = contentContainer
 
 local isMinimized = false
-minimizeBtn.MouseButton1Click:Connect(function()
+logoBtn.MouseButton1Click:Connect(function()
     isMinimized = not isMinimized
     if isMinimized then
-        minimizeBtn.Text = "+"
         frame.Size = UDim2.new(0, 240, 0, 30)
         for _, child in ipairs(contentContainer:GetChildren()) do
             if child:IsA("GuiObject") then child.Visible = false end
         end
     else
-        minimizeBtn.Text = "-"
         frame.Size = UDim2.new(0, 240, 0, 310)
         for _, child in ipairs(contentContainer:GetChildren()) do
             if child:IsA("GuiObject") then child.Visible = true end
