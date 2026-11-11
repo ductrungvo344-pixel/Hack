@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT GRAB.LUA - ĐỘC LẬP (TP BỤC, BỎ CHECK, AUTO GRAB & THẢ)
+-- SCRIPT GRAB.LUA - CÓ NÚT CHUYỂN US/VN
 -- =================================================================
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -18,8 +18,8 @@ screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 240, 0, 200)
-frame.Position = UDim2.new(0.72, 0, 0.45, 0)
+frame.Size = UDim2.new(0, 240, 0, 235)
+frame.Position = UDim2.new(0.72, 0, 0.48, 0)
 frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 frame.BorderSizePixel = 0
 frame.Active = true
@@ -107,10 +107,25 @@ local btnCornerKillAll = Instance.new("UICorner")
 btnCornerKillAll.CornerRadius = UDim.new(0, 6)
 btnCornerKillAll.Parent = autoKillAllBtn
 
+-- NÚT CHUYỂN US/VN CHO SCRIPT GRAB
+local toggleRegionGrabBtn = Instance.new("TextButton")
+toggleRegionGrabBtn.Size = UDim2.new(0.9, 0, 0, 26)
+toggleRegionGrabBtn.Position = UDim2.new(0.05, 0, 0, 140)
+toggleRegionGrabBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
+toggleRegionGrabBtn.Text = "🌍 Khu vực: VN (Tiếng Việt)"
+toggleRegionGrabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleRegionGrabBtn.TextSize = 10
+toggleRegionGrabBtn.Font = Enum.Font.GothamBold
+toggleRegionGrabBtn.Parent = frame
+
+local btnCornerRegionGrab = Instance.new("UICorner")
+btnCornerRegionGrab.CornerRadius = UDim.new(0, 6)
+btnCornerRegionGrab.Parent = toggleRegionGrabBtn
+
 -- Thông báo trạng thái
 local infoStatusLabel = Instance.new("TextLabel")
 infoStatusLabel.Size = UDim2.new(0.9, 0, 0, 50)
-infoStatusLabel.Position = UDim2.new(0.05, 0, 0, 140)
+infoStatusLabel.Position = UDim2.new(0.05, 0, 0, 172)
 infoStatusLabel.BackgroundTransparency = 1
 infoStatusLabel.Text = "Trạng thái Grab: Sẵn sàng"
 infoStatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -122,6 +137,7 @@ infoStatusLabel.Parent = frame
 -- HỆ THỐNG GRAB
 local isAutoGrabAllRunning = false
 local isAutoKillAllRunning = false
+local isUSModeGrab = false
 local platformPart = nil
 
 local hugRequestRemote = ReplicatedStorage:FindFirstChild("HugRemotes") 
@@ -147,7 +163,7 @@ local function removePlatform()
     end
 end
 
--- Hàm Grab và Thả trực tiếp (Đã bỏ check rườm rà)
+-- Hàm Grab và Thả trực tiếp
 local function grabTargetChar(targetChar)
     if not targetChar then return false end
     return pcall(function()
@@ -174,10 +190,14 @@ grabBtn.MouseButton1Click:Connect(function()
     
     if targetP and targetP.Character then
         grabTargetChar(targetP.Character)
-        infoStatusLabel.Text = "🪝 Đã Grab & Thả: " .. targetP.Name
+        if isUSModeGrab then
+            infoStatusLabel.Text = "🪝 Grabbed & Released: " .. targetP.Name
+        else
+            infoStatusLabel.Text = "🪝 Đã Grab & Thả: " .. targetP.Name
+        end
         infoStatusLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
     else
-        infoStatusLabel.Text = "⚠️ Vui lòng nhập tên Player hợp lệ!"
+        infoStatusLabel.Text = isUSModeGrab and "⚠️ Please enter a valid player name!" or "⚠️ Vui lòng nhập tên Player hợp lệ!"
         infoStatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
     end
 end)
@@ -187,13 +207,13 @@ autoGrabAllBtn.MouseButton1Click:Connect(function()
     isAutoGrabAllRunning = not isAutoGrabAllRunning
     if isAutoGrabAllRunning then
         autoGrabAllBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
-        autoGrabAllBtn.Text = "🤖 Auto Grab ALL: BẬT"
-        infoStatusLabel.Text = "🤖 Đang Auto Grab ALL..."
+        autoGrabAllBtn.Text = isUSModeGrab and "🤖 Auto Grab ALL: ON" or "🤖 Auto Grab ALL: BẬT"
+        infoStatusLabel.Text = isUSModeGrab and "🤖 Auto Grab ALL running..." or "🤖 Đang Auto Grab ALL..."
         infoStatusLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
     else
         autoGrabAllBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
-        autoGrabAllBtn.Text = "🤖 Auto Grab ALL: TẮT"
-        infoStatusLabel.Text = "Đã dừng Auto Grab ALL."
+        autoGrabAllBtn.Text = isUSModeGrab and "🤖 Auto Grab ALL: OFF" or "🤖 Auto Grab ALL: TẮT"
+        infoStatusLabel.Text = isUSModeGrab and "Auto Grab ALL stopped." or "Đã dừng Auto Grab ALL."
         infoStatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
     end
 end)
@@ -203,8 +223,8 @@ autoKillAllBtn.MouseButton1Click:Connect(function()
     isAutoKillAllRunning = not isAutoKillAllRunning
     if isAutoKillAllRunning then
         autoKillAllBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
-        autoKillAllBtn.Text = "⚔️ Auto Kill All (TP Bục + Grab & Thả): BẬT"
-        infoStatusLabel.Text = "⚔️ Đã TP tới bục & bắt đầu Auto Kill All..."
+        autoKillAllBtn.Text = isUSModeGrab and "⚔️ Auto Kill All (TP + Grab): ON" or "⚔️ Auto Kill All (TP Bục + Grab & Thả): BẬT"
+        infoStatusLabel.Text = isUSModeGrab and "⚔️ Teleported to platform & Auto Kill All started..." or "⚔️ Đã TP tới bục & bắt đầu Auto Kill All..."
         infoStatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
         
         createPlatform()
@@ -217,10 +237,24 @@ autoKillAllBtn.MouseButton1Click:Connect(function()
         end)
     else
         autoKillAllBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
-        autoKillAllBtn.Text = "⚔️ Auto Kill All (TP Bục + Grab & Thả): TẮT"
-        infoStatusLabel.Text = "Đã dừng Auto Kill All."
+        autoKillAllBtn.Text = isUSModeGrab and "⚔️ Auto Kill All (TP + Grab): OFF" or "⚔️ Auto Kill All (TP Bục + Grab & Thả): TẮT"
+        infoStatusLabel.Text = isUSModeGrab and "Auto Kill All stopped." or "Đã dừng Auto Kill All."
         infoStatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
         removePlatform()
+    end
+end)
+
+-- NÚT CHUYỂN US/VN EVENT
+toggleRegionGrabBtn.MouseButton1Click:Connect(function()
+    isUSModeGrab = not isUSModeGrab
+    if isUSModeGrab then
+        toggleRegionGrabBtn.Text = "🇺🇸 Region: US (English)"
+        title.Text = "  🪝 GRAB & KILL ALL MENU"
+        infoStatusLabel.Text = "Status: Switched to English (US)"
+    else
+        toggleRegionGrabBtn.Text = "🇻🇳 Khu vực: VN (Tiếng Việt)"
+        title.Text = "  🪝 GRAB & KILL ALL MENU"
+        infoStatusLabel.Text = "Trạng thái: Đã chuyển sang Tiếng Việt (VN)"
     end
 end)
 
@@ -245,7 +279,7 @@ task.spawn(function()
                         if p ~= localPlayer and p.Character then
                             local pHum = p.Character:FindFirstChildOfClass("Humanoid")
                             if pHum and pHum.Health > 0 then
-                                infoStatusLabel.Text = "⚔️ Đang Kill All: " .. p.Name
+                                infoStatusLabel.Text = (isUSModeGrab and "⚔️ Killing: " or "⚔️ Đang Kill All: ") .. p.Name
                                 infoStatusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
                                 grabTargetChar(p.Character)
                                 task.wait(0.3)
@@ -281,4 +315,4 @@ task.spawn(function()
     end
 end)
 
-print("✅ Đã tải xong script grab.lua độc lập (Không có check rườm rà)!")
+print("✅ grab.lua loaded with US/VN toggle!")
