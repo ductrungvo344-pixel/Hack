@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT SLAP.LUA - CHỈ GIỮ LẠI DÒ SAU, AUTO SLAP, ĐOÁN VÀ ĐO
+-- SCRIPT SLAP.LUA - CÓ NÚT CHUYỂN US/VN
 -- =================================================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -18,9 +18,9 @@ screenGui.Name = "BehindDetectorGUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
--- Tạo khung chính
+-- Tạo khung chính (tăng chiều cao một chút để chứa nút mới)
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 240, 0, 275)
+frame.Size = UDim2.new(0, 240, 0, 310)
 frame.Position = UDim2.new(0.72, 0, 0.15, 0)
 frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 frame.BorderSizePixel = 0
@@ -157,10 +157,25 @@ local btnCorner4 = Instance.new("UICorner")
 btnCorner4.CornerRadius = UDim.new(0, 6)
 btnCorner4.Parent = toggleAutoMeterBtn
 
+-- 5. NÚT CHUYỂN US/VN
+local toggleRegionBtn = Instance.new("TextButton")
+toggleRegionBtn.Size = UDim2.new(0.9, 0, 0, 26)
+toggleRegionBtn.Position = UDim2.new(0.05, 0, 0, 182)
+toggleRegionBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
+toggleRegionBtn.Text = "🌍 Khu vực: VN (Tiếng Việt)"
+toggleRegionBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleRegionBtn.TextSize = 10
+toggleRegionBtn.Font = Enum.Font.GothamBold
+toggleRegionBtn.Parent = contentContainer
+
+local btnCornerRegion = Instance.new("UICorner")
+btnCornerRegion.CornerRadius = UDim.new(0, 6)
+btnCornerRegion.Parent = toggleRegionBtn
+
 -- Thông báo trạng thái chi tiết
 local infoStatusLabel = Instance.new("TextLabel")
-infoStatusLabel.Size = UDim2.new(0.9, 0, 0, 60)
-infoStatusLabel.Position = UDim2.new(0.05, 0, 0, 184)
+infoStatusLabel.Size = UDim2.new(0.9, 0, 0, 65)
+infoStatusLabel.Position = UDim2.new(0.05, 0, 0, 214)
 infoStatusLabel.BackgroundTransparency = 1
 infoStatusLabel.Text = "Trạng thái: Sẵn sàng"
 infoStatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -183,7 +198,7 @@ minimizeBtn.MouseButton1Click:Connect(function()
         end
     else
         minimizeBtn.Text = "-"
-        frame.Size = UDim2.new(0, 240, 0, 275)
+        frame.Size = UDim2.new(0, 240, 0, 310)
         for _, child in ipairs(contentContainer:GetChildren()) do
             if child:IsA("GuiObject") then
                 child.Visible = true
@@ -198,6 +213,7 @@ local isBehindRunning = true
 local isAutoSlapRunning = false
 local isAutoGuessRunning = false
 local isAutoMeterRunning = false
+local isUSMode = false
 
 local detectedPlayerName = nil
 local lastGuessFiredTime = 0
@@ -209,11 +225,11 @@ toggleBehindBtn.MouseButton1Click:Connect(function()
     isBehindRunning = not isBehindRunning
     if isBehindRunning then
         toggleBehindBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
-        toggleBehindBtn.Text = "Dò Phía Sau: BẬT"
+        toggleBehindBtn.Text = isUSMode and "Behind Detector: ON" or "Dò Phía Sau: BẬT"
     else
         toggleBehindBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
-        toggleBehindBtn.Text = "Dò Phía Sau: TẮT"
-        statusLabel.Text = "Đã dừng dò tìm."
+        toggleBehindBtn.Text = isUSMode and "Behind Detector: OFF" or "Dò Phía Sau: TẮT"
+        statusLabel.Text = isUSMode and "Scanning stopped." or "Đã dừng dò tìm."
         statusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
     end
 end)
@@ -223,10 +239,10 @@ toggleSlapBtn.MouseButton1Click:Connect(function()
     isAutoSlapRunning = not isAutoSlapRunning
     if isAutoSlapRunning then
         toggleSlapBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
-        toggleSlapBtn.Text = "Auto Slap: BẬT"
+        toggleSlapBtn.Text = isUSMode and "Auto Slap: ON" or "Auto Slap: BẬT"
     else
         toggleSlapBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
-        toggleSlapBtn.Text = "Auto Slap: TẮT"
+        toggleSlapBtn.Text = isUSMode and "Auto Slap: OFF" or "Auto Slap: TẮT"
     end
 end)
 
@@ -235,10 +251,10 @@ toggleAutoGuessBtn.MouseButton1Click:Connect(function()
     isAutoGuessRunning = not isAutoGuessRunning
     if isAutoGuessRunning then
         toggleAutoGuessBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
-        toggleAutoGuessBtn.Text = "Auto Đoán: BẬT"
+        toggleAutoGuessBtn.Text = isUSMode and "Auto Guess: ON" or "Auto Đoán: BẬT"
     else
         toggleAutoGuessBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
-        toggleAutoGuessBtn.Text = "Auto Đoán: TẮT"
+        toggleAutoGuessBtn.Text = isUSMode and "Auto Guess: OFF" or "Auto Đoán: TẮT"
     end
 end)
 
@@ -247,14 +263,28 @@ toggleAutoMeterBtn.MouseButton1Click:Connect(function()
     isAutoMeterRunning = not isAutoMeterRunning
     if isAutoMeterRunning then
         toggleAutoMeterBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
-        toggleAutoMeterBtn.Text = "Đo: BẬT"
+        toggleAutoMeterBtn.Text = isUSMode and "Meter: ON" or "Đo: BẬT"
         meterStartTime = nil
         hasFiredMeter = false
     else
         toggleAutoMeterBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
-        toggleAutoMeterBtn.Text = "Đo: TẮT"
+        toggleAutoMeterBtn.Text = isUSMode and "Meter: OFF" or "Đo: TẮT"
         meterStartTime = nil
         hasFiredMeter = false
+    end
+end)
+
+-- 5. LOGIC CHUYỂN US/VN
+toggleRegionBtn.MouseButton1Click:Connect(function()
+    isUSMode = not isUSMode
+    if isUSMode then
+        toggleRegionBtn.Text = "🇺🇸 Region: US (English)"
+        title.Text = "  👀 BEHIND & AUTO SLAP"
+        infoStatusLabel.Text = "Status: Switched to English (US)"
+    else
+        toggleRegionBtn.Text = "🇻🇳 Khu vực: VN (Tiếng Việt)"
+        title.Text = "  👀 DÒ SAU & AUTO SLAP"
+        infoStatusLabel.Text = "Trạng thái: Đã chuyển sang Tiếng Việt (VN)"
     end
 end)
 
@@ -266,7 +296,7 @@ RunService.RenderStepped:Connect(function()
     local rootPart = character and character:FindFirstChild("HumanoidRootPart")
     
     if not rootPart then
-        statusLabel.Text = "Không tìm thấy nhân vật!"
+        statusLabel.Text = isUSMode and "Character not found!" or "Không tìm thấy nhân vật!"
         statusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
         detectedPlayerName = nil
         return
@@ -298,11 +328,15 @@ RunService.RenderStepped:Connect(function()
     
     if closestPlayer then
         detectedPlayerName = closestPlayer
-        statusLabel.Text = string.format("⚠️ Có [%s] phía sau!\nKhoảng cách: %.1f studs", closestPlayer, minDistance)
+        if isUSMode then
+            statusLabel.Text = string.format("⚠️ [%s] is behind you!\nDistance: %.1f studs", closestPlayer, minDistance)
+        else
+            statusLabel.Text = string.format("⚠️ Có [%s] phía sau!\nKhoảng cách: %.1f studs", closestPlayer, minDistance)
+        end
         statusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
     else
         detectedPlayerName = nil
-        statusLabel.Text = "✅ An toàn: Phía sau trống."
+        statusLabel.Text = isUSMode and "✅ Safe: Behind is clear." or "✅ An toàn: Phía sau trống."
         statusLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
     end
 end)
@@ -388,4 +422,4 @@ task.spawn(function()
     end
 end)
 
-print("✅ Đã tải xong script slap.lua!")
+print("✅ slap.lua loaded with US/VN toggle!")
