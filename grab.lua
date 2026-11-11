@@ -1,17 +1,13 @@
 -- =================================================================
--- SCRIPT GRAB.LUA - CÓ NÚT CHUYỂN US/VN
+-- SCRIPT GRAB.LUA - ĐÃ FIX ĐỔI TÊN NÚT KHI CHUYỂN US/VN
 -- =================================================================
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local localPlayer = Players.LocalPlayer
 local playerGui = localPlayer:WaitForChild("PlayerGui")
 
--- Xóa GUI Grab cũ nếu đã tồn tại
-if playerGui:FindFirstChild("GrabMenuGUI") then
-    playerGui.GrabMenuGUI:Destroy()
-end
+if playerGui:FindFirstChild("GrabMenuGUI") then playerGui.GrabMenuGUI:Destroy() end
 
--- Tạo ScreenGui riêng cho Grab
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "GrabMenuGUI"
 screenGui.ResetOnSpawn = false
@@ -45,7 +41,6 @@ local titleCorner = Instance.new("UICorner")
 titleCorner.CornerRadius = UDim.new(0, 8)
 titleCorner.Parent = title
 
--- Ô nhập tên Player chọn riêng
 local playerInputBox = Instance.new("TextBox")
 playerInputBox.Size = UDim2.new(0.9, 0, 0, 24)
 playerInputBox.Position = UDim2.new(0.05, 0, 0, 40)
@@ -62,7 +57,6 @@ local boxCornerGrab = Instance.new("UICorner")
 boxCornerGrab.CornerRadius = UDim.new(0, 6)
 boxCornerGrab.Parent = playerInputBox
 
--- Nút Grab Đơn Player Đã Chọn
 local grabBtn = Instance.new("TextButton")
 grabBtn.Size = UDim2.new(0.43, 0, 0, 26)
 grabBtn.Position = UDim2.new(0.05, 0, 0, 72)
@@ -77,7 +71,6 @@ local btnCornerG1 = Instance.new("UICorner")
 btnCornerG1.CornerRadius = UDim.new(0, 6)
 btnCornerG1.Parent = grabBtn
 
--- Nút Auto Grab All
 local autoGrabAllBtn = Instance.new("TextButton")
 autoGrabAllBtn.Size = UDim2.new(0.43, 0, 0, 26)
 autoGrabAllBtn.Position = UDim2.new(0.52, 0, 0, 72)
@@ -92,7 +85,6 @@ local btnCornerG2 = Instance.new("UICorner")
 btnCornerG2.CornerRadius = UDim.new(0, 6)
 btnCornerG2.Parent = autoGrabAllBtn
 
--- Nút Auto Kill All (TP Bục + Grab & Thả)
 local autoKillAllBtn = Instance.new("TextButton")
 autoKillAllBtn.Size = UDim2.new(0.9, 0, 0, 28)
 autoKillAllBtn.Position = UDim2.new(0.05, 0, 0, 105)
@@ -107,12 +99,11 @@ local btnCornerKillAll = Instance.new("UICorner")
 btnCornerKillAll.CornerRadius = UDim.new(0, 6)
 btnCornerKillAll.Parent = autoKillAllBtn
 
--- NÚT CHUYỂN US/VN CHO SCRIPT GRAB
 local toggleRegionGrabBtn = Instance.new("TextButton")
 toggleRegionGrabBtn.Size = UDim2.new(0.9, 0, 0, 26)
 toggleRegionGrabBtn.Position = UDim2.new(0.05, 0, 0, 140)
 toggleRegionGrabBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
-toggleRegionGrabBtn.Text = "🌍 Khu vực: VN (Tiếng Việt)"
+toggleRegionGrabBtn.Text = "🇻🇳 Khu vực: VN (Tiếng Việt)"
 toggleRegionGrabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 toggleRegionGrabBtn.TextSize = 10
 toggleRegionGrabBtn.Font = Enum.Font.GothamBold
@@ -122,7 +113,6 @@ local btnCornerRegionGrab = Instance.new("UICorner")
 btnCornerRegionGrab.CornerRadius = UDim.new(0, 6)
 btnCornerRegionGrab.Parent = toggleRegionGrabBtn
 
--- Thông báo trạng thái
 local infoStatusLabel = Instance.new("TextLabel")
 infoStatusLabel.Size = UDim2.new(0.9, 0, 0, 50)
 infoStatusLabel.Position = UDim2.new(0.05, 0, 0, 172)
@@ -134,16 +124,13 @@ infoStatusLabel.Font = Enum.Font.Gotham
 infoStatusLabel.TextWrapped = true
 infoStatusLabel.Parent = frame
 
--- HỆ THỐNG GRAB
 local isAutoGrabAllRunning = false
 local isAutoKillAllRunning = false
 local isUSModeGrab = false
 local platformPart = nil
 
-local hugRequestRemote = ReplicatedStorage:FindFirstChild("HugRemotes") 
-    and ReplicatedStorage.HugRemotes:FindFirstChild("HugRequest")
+local hugRequestRemote = ReplicatedStorage:FindFirstChild("HugRemotes") and ReplicatedStorage.HugRemotes:FindFirstChild("HugRequest")
 
--- Tạo bục tại tọa độ chỉ định (-3.050, -54.182, 98.073)
 local function createPlatform()
     if platformPart then pcall(function() platformPart:Destroy() end) end
     platformPart = Instance.new("Part")
@@ -157,13 +144,9 @@ local function createPlatform()
 end
 
 local function removePlatform()
-    if platformPart then
-        pcall(function() platformPart:Destroy() end)
-        platformPart = nil
-    end
+    if platformPart then pcall(function() platformPart:Destroy() end); platformPart = nil end
 end
 
--- Hàm Grab và Thả trực tiếp
 local function grabTargetChar(targetChar)
     if not targetChar then return false end
     return pcall(function()
@@ -175,7 +158,6 @@ local function grabTargetChar(targetChar)
     end)
 end
 
--- Nút Grab Đơn
 grabBtn.MouseButton1Click:Connect(function()
     local nameText = playerInputBox.Text
     local targetP = nil
@@ -187,104 +169,79 @@ grabBtn.MouseButton1Click:Connect(function()
             end
         end
     end
-    
     if targetP and targetP.Character then
         grabTargetChar(targetP.Character)
-        if isUSModeGrab then
-            infoStatusLabel.Text = "🪝 Grabbed & Released: " .. targetP.Name
-        else
-            infoStatusLabel.Text = "🪝 Đã Grab & Thả: " .. targetP.Name
-        end
-        infoStatusLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
+        infoStatusLabel.Text = isUSModeGrab and ("Grabbed: " .. targetP.Name) or ("Đã Grab & Thả: " .. targetP.Name)
     else
-        infoStatusLabel.Text = isUSModeGrab and "⚠️ Please enter a valid player name!" or "⚠️ Vui lòng nhập tên Player hợp lệ!"
-        infoStatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+        infoStatusLabel.Text = isUSModeGrab and "Invalid player name!" or "Vui lòng nhập tên Player hợp lệ!"
     end
 end)
 
--- Toggle Auto Grab All
 autoGrabAllBtn.MouseButton1Click:Connect(function()
     isAutoGrabAllRunning = not isAutoGrabAllRunning
     if isAutoGrabAllRunning then
         autoGrabAllBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
-        autoGrabAllBtn.Text = isUSModeGrab and "🤖 Auto Grab ALL: ON" or "🤖 Auto Grab ALL: BẬT"
-        infoStatusLabel.Text = isUSModeGrab and "🤖 Auto Grab ALL running..." or "🤖 Đang Auto Grab ALL..."
-        infoStatusLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
+        autoGrabAllBtn.Text = isUSModeGrab and "Auto Grab ALL: ON" or "Auto Grab ALL: BẬT"
     else
         autoGrabAllBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
-        autoGrabAllBtn.Text = isUSModeGrab and "🤖 Auto Grab ALL: OFF" or "🤖 Auto Grab ALL: TẮT"
-        infoStatusLabel.Text = isUSModeGrab and "Auto Grab ALL stopped." or "Đã dừng Auto Grab ALL."
-        infoStatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+        autoGrabAllBtn.Text = isUSModeGrab and "Auto Grab ALL: OFF" or "Auto Grab ALL: TẮT"
     end
 end)
 
--- Toggle Auto Kill All (TP Bục + Grab & Thả)
 autoKillAllBtn.MouseButton1Click:Connect(function()
     isAutoKillAllRunning = not isAutoKillAllRunning
     if isAutoKillAllRunning then
         autoKillAllBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
-        autoKillAllBtn.Text = isUSModeGrab and "⚔️ Auto Kill All (TP + Grab): ON" or "⚔️ Auto Kill All (TP Bục + Grab & Thả): BẬT"
-        infoStatusLabel.Text = isUSModeGrab and "⚔️ Teleported to platform & Auto Kill All started..." or "⚔️ Đã TP tới bục & bắt đầu Auto Kill All..."
-        infoStatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-        
+        autoKillAllBtn.Text = isUSModeGrab and "Auto Kill All (TP + Grab): ON" or "Auto Kill All (TP Bục + Grab & Thả): BẬT"
         createPlatform()
         pcall(function()
             local char = localPlayer.Character
             local root = char and char:FindFirstChild("HumanoidRootPart")
-            if root then
-                root.CFrame = CFrame.new(-3.050, -54.182, 98.073)
-            end
+            if root then root.CFrame = CFrame.new(-3.050, -54.182, 98.073) end
         end)
     else
         autoKillAllBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
-        autoKillAllBtn.Text = isUSModeGrab and "⚔️ Auto Kill All (TP + Grab): OFF" or "⚔️ Auto Kill All (TP Bục + Grab & Thả): TẮT"
-        infoStatusLabel.Text = isUSModeGrab and "Auto Kill All stopped." or "Đã dừng Auto Kill All."
-        infoStatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+        autoKillAllBtn.Text = isUSModeGrab and "Auto Kill All (TP + Grab): OFF" or "Auto Kill All (TP Bục + Grab & Thả): TẮT"
         removePlatform()
     end
 end)
 
--- NÚT CHUYỂN US/VN EVENT
 toggleRegionGrabBtn.MouseButton1Click:Connect(function()
     isUSModeGrab = not isUSModeGrab
     if isUSModeGrab then
         toggleRegionGrabBtn.Text = "🇺🇸 Region: US (English)"
         title.Text = "  🪝 GRAB & KILL ALL MENU"
-        infoStatusLabel.Text = "Status: Switched to English (US)"
+        grabBtn.Text = "Grab Player"
+        autoGrabAllBtn.Text = isAutoGrabAllRunning and "Auto Grab ALL: ON" or "Auto Grab ALL: OFF"
+        autoKillAllBtn.Text = isAutoKillAllRunning and "Auto Kill All (TP + Grab): ON" or "Auto Kill All (TP + Grab): OFF"
+        playerInputBox.PlaceholderText = "Enter player name..."
+        infoStatusLabel.Text = "Status: Ready"
     else
         toggleRegionGrabBtn.Text = "🇻🇳 Khu vực: VN (Tiếng Việt)"
         title.Text = "  🪝 GRAB & KILL ALL MENU"
-        infoStatusLabel.Text = "Trạng thái: Đã chuyển sang Tiếng Việt (VN)"
+        grabBtn.Text = "🪝 Grab Người Này"
+        autoGrabAllBtn.Text = isAutoGrabAllRunning and "Auto Grab ALL: BẬT" or "Auto Grab ALL: TẮT"
+        autoKillAllBtn.Text = isAutoKillAllRunning and "Auto Kill All (TP Bục + Grab & Thả): BẬT" or "Auto Kill All (TP Bục + Grab & Thả): TẮT"
+        playerInputBox.PlaceholderText = "Nhập tên Player cần Grab..."
+        infoStatusLabel.Text = "Trạng thái Grab: Sẵn sàng"
     end
 end)
 
--- Loop Auto Kill All
 task.spawn(function()
     while true do
         task.wait(0.3)
         if isAutoKillAllRunning then
             pcall(function()
-                local char = localPlayer.Character
-                local root = char and char:FindFirstChild("HumanoidRootPart")
+                local root = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")
                 if root then
                     local targetPos = Vector3.new(-3.050, -54.182, 98.073)
-                    if (root.Position - targetPos).Magnitude > 5 then
-                        root.CFrame = CFrame.new(targetPos)
-                    end
+                    if (root.Position - targetPos).Magnitude > 5 then root.CFrame = CFrame.new(targetPos) end
                 end
-
-                if isAutoKillAllRunning then
-                    for _, p in ipairs(Players:GetPlayers()) do
-                        if not isAutoKillAllRunning then break end
-                        if p ~= localPlayer and p.Character then
-                            local pHum = p.Character:FindFirstChildOfClass("Humanoid")
-                            if pHum and pHum.Health > 0 then
-                                infoStatusLabel.Text = (isUSModeGrab and "⚔️ Killing: " or "⚔️ Đang Kill All: ") .. p.Name
-                                infoStatusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
-                                grabTargetChar(p.Character)
-                                task.wait(0.3)
-                            end
-                        end
+                for _, p in ipairs(Players:GetPlayers()) do
+                    if not isAutoKillAllRunning then break end
+                    if p ~= localPlayer and p.Character then
+                        local pHum = p.Character:FindFirstChildOfClass("Humanoid")
+                        if pHum and pHum.Health > 0 then grabTargetChar(p.Character); task.wait(0.3) end
                     end
                 end
             end)
@@ -292,27 +249,19 @@ task.spawn(function()
     end
 end)
 
--- Loop Auto Grab All
 task.spawn(function()
     while true do
         task.wait(0.3)
         if isAutoGrabAllRunning and not isAutoKillAllRunning then
             pcall(function()
-                if isAutoGrabAllRunning then
-                    for _, p in ipairs(Players:GetPlayers()) do
-                        if not isAutoGrabAllRunning then break end
-                        if p ~= localPlayer and p.Character then
-                            local pHum = p.Character:FindFirstChildOfClass("Humanoid")
-                            if pHum and pHum.Health > 0 then
-                                grabTargetChar(p.Character)
-                                task.wait(0.3)
-                            end
-                        end
+                for _, p in ipairs(Players:GetPlayers()) do
+                    if not isAutoGrabAllRunning then break end
+                    if p ~= localPlayer and p.Character then
+                        local pHum = p.Character:FindFirstChildOfClass("Humanoid")
+                        if pHum and pHum.Health > 0 then grabTargetChar(p.Character); task.wait(0.3) end
                     end
                 end
             end)
         end
     end
 end)
-
-print("✅ grab.lua loaded with US/VN toggle!")
