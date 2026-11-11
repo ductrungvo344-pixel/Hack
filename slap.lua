@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT GUI HOÀN CHỈNH: DÒ SAU + AUTO SLAP + AUTO ĐOÁN + AUTO ĐO (TỰ GHI GIÁ TRỊ)
+-- SCRIPT SLAP.LUA - AUTO GRAB ALL PLAYER (CHECK HUGBUTTONS TỰ ĐỘNG)
 -- =================================================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -20,8 +20,8 @@ screenGui.Parent = playerGui
 
 -- Tạo khung chính
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 240, 0, 310)
-frame.Position = UDim2.new(0.72, 0, 0.15, 0)
+frame.Size = UDim2.new(0, 240, 0, 510)
+frame.Position = UDim2.new(0.72, 0, 0.12, 0)
 frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 frame.BorderSizePixel = 0
 frame.Active = true
@@ -37,7 +37,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 30)
 title.Position = UDim2.new(0, 0, 0, 0)
 title.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-title.Text = "  👀 DÒ SAU & AUTO TOOL"
+title.Text = "  👀 DÒ SAU & GRAB MENU"
 title.TextColor3 = Color3.fromRGB(255, 215, 0)
 title.TextSize = 11
 title.Font = Enum.Font.GothamBold
@@ -117,7 +117,6 @@ toggleAutoGuessBtn.Position = UDim2.new(0.05, 0, 0, 124)
 toggleAutoGuessBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
 toggleAutoGuessBtn.Text = "Auto Đoán: TẮT"
 toggleAutoGuessBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-toggleLightMeterBtnTextSize = 11
 toggleAutoGuessBtn.TextSize = 11
 toggleAutoGuessBtn.Font = Enum.Font.GothamBold
 toggleAutoGuessBtn.Parent = contentContainer
@@ -126,12 +125,12 @@ local btnCorner3 = Instance.new("UICorner")
 btnCorner3.CornerRadius = UDim.new(0, 6)
 btnCorner3.Parent = toggleAutoGuessBtn
 
--- 4. Ô NHẬP GIÁ TRỊ TỰ GHI (TextBox cho Auto Đo)
+-- 4. Ô nhập giá trị Auto Đo
 local customMeterInput = Instance.new("TextBox")
 customMeterInput.Size = UDim2.new(0.55, 0, 0, 24)
 customMeterInput.Position = UDim2.new(0.05, 0, 0, 152)
 customMeterInput.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-customMeterInput.Text = "1" -- Giá trị mặc định ban đầu
+customMeterInput.Text = "1"
 customMeterInput.TextColor3 = Color3.fromRGB(255, 255, 255)
 customMeterInput.TextSize = 11
 customMeterInput.Font = Enum.Font.GothamBold
@@ -143,7 +142,7 @@ local inputCorner = Instance.new("UICorner")
 inputCorner.CornerRadius = UDim.new(0, 6)
 inputCorner.Parent = customMeterInput
 
--- 5. Nút Bật/Tắt Auto Đo (Custom Value)
+-- Nút Bật/Tắt Auto Đo
 local toggleAutoMeterBtn = Instance.new("TextButton")
 toggleAutoMeterBtn.Size = UDim2.new(0.32, 0, 0, 24)
 toggleAutoMeterBtn.Position = UDim2.new(0.63, 0, 0, 152)
@@ -158,10 +157,101 @@ local btnCorner4 = Instance.new("UICorner")
 btnCorner4.CornerRadius = UDim.new(0, 6)
 btnCorner4.Parent = toggleAutoMeterBtn
 
+-- 5. Nút Auto Quay Hộp Fast
+local toggleFastCaseBtn = Instance.new("TextButton")
+toggleFastCaseBtn.Size = UDim2.new(0.9, 0, 0, 26)
+toggleFastCaseBtn.Position = UDim2.new(0.05, 0, 0, 182)
+toggleFastCaseBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+toggleFastCaseBtn.Text = "⚡ Auto Quay Hộp: TẮT"
+toggleFastCaseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleFastCaseBtn.TextSize = 11
+toggleFastCaseBtn.Font = Enum.Font.GothamBold
+toggleFastCaseBtn.Parent = contentContainer
+
+local btnCorner5 = Instance.new("UICorner")
+btnCorner5.CornerRadius = UDim.new(0, 6)
+btnCorner5.Parent = toggleFastCaseBtn
+
+-- 6. NÚT AUTO KILL PLAYER
+local toggleKillPlayerBtn = Instance.new("TextButton")
+toggleKillPlayerBtn.Size = UDim2.new(0.9, 0, 0, 26)
+toggleKillPlayerBtn.Position = UDim2.new(0.05, 0, 0, 212)
+toggleKillPlayerBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+toggleKillPlayerBtn.Text = "⚔️ Auto Kill Player: TẮT"
+toggleKillPlayerBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleKillPlayerBtn.TextSize = 11
+toggleKillPlayerBtn.Font = Enum.Font.GothamBold
+toggleKillPlayerBtn.Parent = contentContainer
+
+local btnCorner6 = Instance.new("UICorner")
+btnCorner6.CornerRadius = UDim.new(0, 6)
+btnCorner6.Parent = toggleKillPlayerBtn
+
+-- =================================================================
+-- PHẦN GRAB PLAYER & AUTO GRAB ALL
+-- =================================================================
+local grabTitle = Instance.new("TextLabel")
+grabTitle.Size = UDim2.new(0.9, 0, 0, 18)
+grabTitle.Position = UDim2.new(0.05, 0, 0, 245)
+grabTitle.BackgroundTransparency = 1
+grabTitle.Text = "🪝 HỆ THỐNG GRAB PLAYER:"
+grabTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
+grabTitle.TextSize = 10
+grabTitle.Font = Enum.Font.GothamBold
+grabTitle.TextXAlignment = Enum.TextXAlignment.Left
+grabTitle.Parent = contentContainer
+
+-- Ô nhập tên Player chọn riêng
+local playerInputBox = Instance.new("TextBox")
+playerInputBox.Size = UDim2.new(0.9, 0, 0, 24)
+playerInputBox.Position = UDim2.new(0.05, 0, 0, 265)
+playerInputBox.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+playerInputBox.Text = ""
+playerInputBox.PlaceholderText = "Nhập tên Player cần Grab..."
+playerInputBox.TextColor3 = Color3.fromRGB(0, 255, 150)
+playerInputBox.TextSize = 10
+playerInputBox.Font = Enum.Font.GothamBold
+playerInputBox.ClearTextOnFocus = false
+playerInputBox.Parent = contentContainer
+
+local boxCornerGrab = Instance.new("UICorner")
+boxCornerGrab.CornerRadius = UDim.new(0, 6)
+boxCornerGrab.Parent = playerInputBox
+
+-- Nút Grab Đơn Player Đã Chọn
+local grabBtn = Instance.new("TextButton")
+grabBtn.Size = UDim2.new(0.43, 0, 0, 26)
+grabBtn.Position = UDim2.new(0.05, 0, 0, 295)
+grabBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
+grabBtn.Text = "🪝 Grab Người Này"
+grabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+grabBtn.TextSize = 10
+grabBtn.Font = Enum.Font.GothamBold
+grabBtn.Parent = contentContainer
+
+local btnCornerG1 = Instance.new("UICorner")
+btnCornerG1.CornerRadius = UDim.new(0, 6)
+btnCornerG1.Parent = grabBtn
+
+-- NÚT AUTO GRAB ALL (GRAB TOÀN BỘ SERVER)
+local autoGrabAllBtn = Instance.new("TextButton")
+autoGrabAllBtn.Size = UDim2.new(0.43, 0, 0, 26)
+autoGrabAllBtn.Position = UDim2.new(0.52, 0, 0, 295)
+autoGrabAllBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+autoGrabAllBtn.Text = "🤖 Auto Grab ALL: TẮT"
+autoGrabAllBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+autoGrabAllBtn.TextSize = 9
+autoGrabAllBtn.Font = Enum.Font.GothamBold
+autoGrabAllBtn.Parent = contentContainer
+
+local btnCornerG2 = Instance.new("UICorner")
+btnCornerG2.CornerRadius = UDim.new(0, 6)
+btnCornerG2.Parent = autoGrabAllBtn
+
 -- Thông báo trạng thái chi tiết
 local infoStatusLabel = Instance.new("TextLabel")
 infoStatusLabel.Size = UDim2.new(0.9, 0, 0, 75)
-infoStatusLabel.Position = UDim2.new(0.05, 0, 0, 182)
+infoStatusLabel.Position = UDim2.new(0.05, 0, 0, 330)
 infoStatusLabel.BackgroundTransparency = 1
 infoStatusLabel.Text = "Trạng thái: Sẵn sàng"
 infoStatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -184,7 +274,7 @@ minimizeBtn.MouseButton1Click:Connect(function()
         end
     else
         minimizeBtn.Text = "-"
-        frame.Size = UDim2.new(0, 240, 0, 310)
+        frame.Size = UDim2.new(0, 240, 0, 510)
         for _, child in ipairs(contentContainer:GetChildren()) do
             if child:IsA("GuiObject") then
                 child.Visible = true
@@ -193,18 +283,139 @@ minimizeBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- LOGIC HỆ THỐNG CHÍNH
+-- HỆ THỐNG CHÍNH
 math.randomseed(tick())
 local isBehindRunning = true
 local isAutoSlapRunning = false
 local isAutoGuessRunning = false
 local isAutoMeterRunning = false
+local isFastCaseRunning = false
+local isKillPlayerRunning = false
+local isAutoGrabAllRunning = false
 
 local detectedPlayerName = nil
 local lastGuessFiredTime = 0
-
 local meterStartTime = nil
 local hasFiredMeter = false
+
+local openCaseRemote = ReplicatedStorage:FindFirstChild("Remotes") 
+    and ReplicatedStorage.Remotes:FindFirstChild("Cases") 
+    and ReplicatedStorage.Remotes.Cases:FindFirstChild("OpenCase")
+
+local hugRequestRemote = ReplicatedStorage:FindFirstChild("HugRemotes") 
+    and ReplicatedStorage.HugRemotes:FindFirstChild("HugRequest")
+
+-- HÀM CHECK HUGBUTTONS XEM CÓ ĐANG HIỂN THỊ KHÔNG
+local function isHugButtonsVisible()
+    local pGui = localPlayer:FindFirstChild("PlayerGui")
+    local hugButtons = pGui and pGui:FindFirstChild("HugButtons")
+    if hugButtons then
+        if hugButtons:IsA("GuiObject") and hugButtons.Visible and hugButtons.AbsoluteSize.X > 0 then
+            return true
+        end
+        for _, child in ipairs(hugButtons:GetDescendants()) do
+            if child:IsA("GuiObject") and child.Visible and child.AbsoluteSize.X > 0 then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+-- HÀM THỰC THI GRAB MỘT NGƯỜI CHƠI
+local function grabTargetChar(targetChar)
+    if not targetChar then return false end
+    return pcall(function()
+        if hugRequestRemote then
+            hugRequestRemote:FireServer("tryGrab", targetChar)
+        end
+    end)
+end
+
+-- NÚT GRAB ĐƠN PLAYER THEO TÊN
+grabBtn.MouseButton1Click:Connect(function()
+    local nameText = playerInputBox.Text
+    local targetP = nil
+    if nameText ~= "" then
+        for _, p in ipairs(Players:GetPlayers()) do
+            if string.find(string.lower(p.Name), string.lower(nameText)) or string.find(string.lower(p.DisplayName), string.lower(nameText)) then
+                targetP = p
+                break
+            end
+        end
+    end
+    
+    if targetP and targetP.Character then
+        grabTargetChar(targetP.Character)
+        infoStatusLabel.Text = "🪝 Đã Grab: " .. targetP.Name
+        infoStatusLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
+    else
+        infoStatusLabel.Text = "⚠️ Vui lòng nhập tên Player hợp lệ!"
+        infoStatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+    end
+end)
+
+-- TOGGLE AUTO GRAB ALL
+autoGrabAllBtn.MouseButton1Click:Connect(function()
+    isAutoGrabAllRunning = not isAutoGrabAllRunning
+    if isAutoGrabAllRunning then
+        autoGrabAllBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
+        autoGrabAllBtn.Text = "🤖 Auto Grab ALL: BẬT"
+        infoStatusLabel.Text = "🤖 Đang Auto Grab ALL toàn bộ server..."
+        infoStatusLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
+    else
+        autoGrabAllBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+        autoGrabAllBtn.Text = "🤖 Auto Grab ALL: TẮT"
+        infoStatusLabel.Text = "Đã dừng Auto Grab ALL."
+        infoStatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+    end
+end)
+
+-- LOOP AUTO GRAB ALL (LẦN LƯỢT MỌI NGƯỜI TRONG SERVER, TẠM DỪNG KHI HUGBUTTONS HIỂN THỊ)
+task.spawn(function()
+    while true do
+        task.wait(0.3)
+        if isAutoGrabAllRunning then
+            pcall(function()
+                -- Nếu HugButtons đang hiện thì đứng chờ cho đến khi ẩn hẳn
+                if isHugButtonsVisible() then
+                    infoStatusLabel.Text = "⏳ Đang chờ nút HugButtons ẩn đi..."
+                    infoStatusLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
+                    while isHugButtonsVisible() and isAutoGrabAllRunning do
+                        task.wait(0.2)
+                    end
+                end
+
+                -- Quét qua từng người chơi để Grab
+                if isAutoGrabAllRunning then
+                    for _, p in ipairs(Players:GetPlayers()) do
+                        if not isAutoGrabAllRunning then break end
+                        
+                        if p ~= localPlayer and p.Character then
+                            local pHum = p.Character:FindFirstChildOfClass("Humanoid")
+                            if pHum and pHum.Health > 0 then
+                                infoStatusLabel.Text = "🪝 Đang Grab ALL: " .. p.Name
+                                infoStatusLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
+                                
+                                grabTargetChar(p.Character)
+                                task.wait(0.4)
+                                
+                                -- Nếu sau khi Grab mà HugButtons hiện lên, chờ cho ẩn rồi mới sang người tiếp
+                                if isHugButtonsVisible() then
+                                    infoStatusLabel.Text = "⏳ Đang giữ nút Grab với [" .. p.Name .. "]..."
+                                    infoStatusLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
+                                    while isHugButtonsVisible() and isAutoGrabAllRunning do
+                                        task.wait(0.2)
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
 
 -- 1. Toggle Dò Phía Sau
 toggleBehindBtn.MouseButton1Click:Connect(function()
@@ -244,7 +455,7 @@ toggleAutoGuessBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 4. Toggle Auto Đo (Custom Value)
+-- 4. Toggle Auto Đo
 toggleAutoMeterBtn.MouseButton1Click:Connect(function()
     isAutoMeterRunning = not isAutoMeterRunning
     if isAutoMeterRunning then
@@ -257,6 +468,103 @@ toggleAutoMeterBtn.MouseButton1Click:Connect(function()
         toggleAutoMeterBtn.Text = "Đo: TẮT"
         meterStartTime = nil
         hasFiredMeter = false
+    end
+end)
+
+-- 5. Toggle Auto Quay Hộp Fast
+toggleFastCaseBtn.MouseButton1Click:Connect(function()
+    isFastCaseRunning = not isFastCaseRunning
+    if isFastCaseRunning then
+        toggleFastCaseBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
+        toggleFastCaseBtn.Text = "⚡ Auto Quay Hộp: BẬT"
+    else
+        toggleFastCaseBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+        toggleFastCaseBtn.Text = "⚡ Auto Quay Hộp: TẮT"
+    end
+end)
+
+-- 6. Toggle Auto Kill Player
+toggleKillPlayerBtn.MouseButton1Click:Connect(function()
+    isKillPlayerRunning = not isKillPlayerRunning
+    if isKillPlayerRunning then
+        toggleKillPlayerBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
+        toggleKillPlayerBtn.Text = "⚔️ Auto Kill Player: BẬT"
+        infoStatusLabel.Text = "⚔️ Đang tự động TP săn toàn bộ Player..."
+        infoStatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+    else
+        toggleKillPlayerBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+        toggleKillPlayerBtn.Text = "⚔️ Auto Kill Player: TẮT"
+        infoStatusLabel.Text = "Đã dừng Auto Kill."
+        infoStatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+    end
+end)
+
+-- LOOP AUTO QUAY HỘP FAST
+task.spawn(function()
+    local args = { [1] = "frost", [2] = true }
+    while true do
+        task.wait(0.01)
+        if isFastCaseRunning then
+            pcall(function()
+                local remote = openCaseRemote or (ReplicatedStorage:FindFirstChild("Remotes") 
+                    and ReplicatedStorage.Remotes:FindFirstChild("Cases") 
+                    and ReplicatedStorage.Remotes.Cases:FindFirstChild("OpenCase"))
+                if remote then remote:FireServer(unpack(args)) end
+            end)
+        end
+    end
+end)
+
+-- LOOP AUTO KILL PLAYER
+task.spawn(function()
+    while true do
+        task.wait(0.2)
+        if isKillPlayerRunning then
+            pcall(function()
+                local char = localPlayer.Character
+                local rootPart = char and char:FindFirstChild("HumanoidRootPart")
+                local humanoid = char and char:FindFirstChildOfClass("Humanoid")
+                
+                local mySword = char and char:FindFirstChildWhichIsA("Tool")
+                if not mySword then
+                    local backpack = localPlayer:FindFirstChildOfClass("Backpack")
+                    if backpack then
+                        for _, tool in ipairs(backpack:GetChildren()) do
+                            if tool:IsA("Tool") then
+                                if humanoid then
+                                    humanoid:EquipTool(tool)
+                                    mySword = tool
+                                    break
+                                end
+                            end
+                        end
+                    end
+                end
+
+                if rootPart then
+                    for _, p in ipairs(Players:GetPlayers()) do
+                        if p ~= localPlayer and p.Character then
+                            local pChar = p.Character
+                            local pRoot = pChar:FindFirstChild("HumanoidRootPart")
+                            local pHumanoid = pChar:FindFirstChildOfClass("Humanoid")
+                            
+                            if pRoot and pHumanoid and pHumanoid.Health > 0 then
+                                infoStatusLabel.Text = string.format("🎯 TP áp sát [%s]!", p.Name)
+                                infoStatusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
+                                
+                                rootPart.CFrame = pRoot.CFrame * CFrame.new(0, 0, 2.5)
+                                
+                                local activeTool = char and char:FindFirstChildWhichIsA("Tool")
+                                if activeTool then activeTool:Activate() end
+                                
+                                task.wait(0.3)
+                                break
+                            end
+                        end
+                    end
+                end
+            end)
+        end
     end
 end)
 
@@ -309,7 +617,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- LOOP 2: AUTO PRESS SLAP BUTTON (Delay 0.2 - 0.4s)
+-- LOOP 2: AUTO SLAP
 task.spawn(function()
     while true do
         local randomDelay = math.random(200, 400) / 1000
@@ -326,9 +634,6 @@ task.spawn(function()
                         for _, connection in pairs(getconnections(slapBtn.MouseButton1Click)) do
                             connection:Fire()
                         end
-                        for _, connection in pairs(getconnections(slapBtn.Activated)) do
-                            connection:Fire()
-                        end
                     else
                         slapBtn:Activate()
                     end
@@ -338,7 +643,7 @@ task.spawn(function()
     end
 end)
 
--- LOOP 3: AUTO ĐOÁN (Guess Event)
+-- LOOP 3: AUTO ĐOÁN
 task.spawn(function()
     while true do
         task.wait(0.05)
@@ -348,24 +653,11 @@ task.spawn(function()
                 local sGui = pGui and pGui:FindFirstChild("ScreenGui")
                 local suspectsGui = sGui and sGui:FindFirstChild("suspects")
                 
-                local isSuspectsVisible = false
-                if suspectsGui then
-                    if suspectsGui:IsA("GuiObject") and suspectsGui.Visible and suspectsGui.AbsoluteSize.X > 0 then
-                        isSuspectsVisible = true
-                    elseif not suspectsGui:IsA("GuiObject") then
-                        isSuspectsVisible = true
-                    end
-                end
-                
-                if isSuspectsVisible and (tick() - lastGuessFiredTime > 1.0) then
+                if suspectsGui and (tick() - lastGuessFiredTime > 1.0) then
                     if detectedPlayerName then
                         lastGuessFiredTime = tick()
                         local guessEvent = ReplicatedStorage:FindFirstChild("events") and ReplicatedStorage.events:FindFirstChild("Guess")
-                        if guessEvent then
-                            guessEvent:FireServer(detectedPlayerName)
-                            infoStatusLabel.Text = "⚡ Auto Đoán: Gửi tên [" .. detectedPlayerName .. "]"
-                            infoStatusLabel.TextColor3 = Color3.fromRGB(0, 255, 150)
-                        end
+                        if guessEvent then guessEvent:FireServer(detectedPlayerName) end
                     end
                 end
             end)
@@ -373,7 +665,7 @@ task.spawn(function()
     end
 end)
 
--- LOOP 4: AUTO ĐO (Custom Value - Delay 1.89s)
+-- LOOP 4: AUTO ĐO
 task.spawn(function()
     while true do
         task.wait(0.05)
@@ -383,31 +675,15 @@ task.spawn(function()
                 local sGui = pGui and pGui:FindFirstChild("ScreenGui")
                 local meterGui = sGui and sGui:FindFirstChild("meter")
                 
-                local isMeterVisible = false
                 if meterGui then
-                    if meterGui:IsA("GuiObject") and meterGui.Visible and meterGui.AbsoluteSize.X > 0 then
-                        isMeterVisible = true
-                    elseif not meterGui:IsA("GuiObject") then
-                        isMeterVisible = true
-                    end
-                end
-                
-                if isMeterVisible then
                     if not hasFiredMeter then
                         if not meterStartTime then
                             meterStartTime = tick()
                         elseif tick() - meterStartTime >= 1.89 then
                             hasFiredMeter = true
-                            
-                            -- Lấy giá trị số từ ô nhập (nếu nhập sai tự động lấy mặc định là 1)
                             local customVal = tonumber(customMeterInput.Text) or 1
-                            
                             local sendSlapEvent = ReplicatedStorage:FindFirstChild("events") and ReplicatedStorage.events:FindFirstChild("SendSlap")
-                            if sendSlapEvent then
-                                sendSlapEvent:FireServer(customVal)
-                                infoStatusLabel.Text = string.format("⚡ Auto Đo: Gửi giá trị [%s]", tostring(customVal))
-                                infoStatusLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
-                            end
+                            if sendSlapEvent then sendSlapEvent:FireServer(customVal) end
                         end
                     end
                 else
@@ -422,4 +698,4 @@ task.spawn(function()
     end
 end)
 
-print("✅ Đã cập nhật xong nút Auto Đo tự nhập giá trị (Custom Value) cho Trung!")
+print("✅ Đã chạy thành công script của Trung và Gemini, đây là lời bí mật mà tớ gửi ở console đó!")
