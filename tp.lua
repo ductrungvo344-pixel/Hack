@@ -1,7 +1,7 @@
 -- =================================================================
--- SCRIPT CHÍNH TỔNG HỢP (tp.lua) - LOGO NỔI ĐỘC LẬP KHI THU NHỎ
+-- SCRIPT CHÍNH (tp.lua) - HOÀN CHỈNH, GỌN GÀNG KHÔNG DEBUG
 -- =================================================================
-print("⏳ Đang khởi chạy tp.lua...")
+print("⏳ Đang khởi động file tp.lua....")
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -22,7 +22,7 @@ end
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "TeleportGUI"
 screenGui.ResetOnSpawn = false
-screenGui.Parent = screenGui
+screenGui.Parent = playerGui
 
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 240, 0, 465)
@@ -48,10 +48,10 @@ title.Font = Enum.Font.GothamBold
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = frame
 
--- Logo nổi độc lập khi thu nhỏ
+-- Logo nổi độc lập khi thu nhỏ (agg2)
 local floatingLogo = Instance.new("TextButton")
 floatingLogo.Size = UDim2.new(0, 35, 0, 35)
-floatingLogo.Position = UDim2.new(0, 50, 0, 50)
+floatingLogo.Position = UDim2.new(0.05, 0, 0.18, 0)
 floatingLogo.BackgroundColor3 = Color3.fromRGB(100, 50, 180)
 floatingLogo.Text = "agg2"
 floatingLogo.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -403,4 +403,4 @@ floatingLogo.MouseButton1Click:Connect(function()
     frame.Visible = true
 end)
 
-print("🎉 Khởi chạy thành công tp.lua bản chuẩn logo nổi độc lập!")
+print("✅ Chạy file tp.lua thành công!")
