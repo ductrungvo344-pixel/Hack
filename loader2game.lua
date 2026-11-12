@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT LOADER CHÍNH - LOGO NỔI ĐỘC LẬP KHI THU NHỎ
+-- SCRIPT LOADER CHÍNH (loader2game.lua) - HOÀN CHỈNH 100%
 -- =================================================================
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
@@ -43,10 +43,10 @@ local titleCorner = Instance.new("UICorner")
 titleCorner.CornerRadius = UDim.new(0, 10)
 titleCorner.Parent = title
 
--- Logo tròn nổi độc lập (Dùng để mở lại menu khi menu chính ẩn)
+-- Logo nổi độc lập khi thu nhỏ (agg2)
 local floatingLogo = Instance.new("TextButton")
 floatingLogo.Size = UDim2.new(0, 35, 0, 35)
-floatingLogo.Position = UDim2.new(0, 50, 0, 50)
+floatingLogo.Position = UDim2.new(0.5, -130, 0.25, 0)
 floatingLogo.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
 floatingLogo.Text = "agg2"
 floatingLogo.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -79,7 +79,7 @@ logoBtn.Parent = frame
 
 local logoCorner = Instance.new("UICorner")
 logoCorner.CornerRadius = UDim.new(1, 0)
-logoCorner.Parent = logoBtn
+logoBtn.Parent = frame
 
 local logoStroke = Instance.new("UIStroke")
 logoStroke.Color = Color3.fromRGB(255, 255, 255)
@@ -90,7 +90,7 @@ local contentContainer = Instance.new("Folder")
 contentContainer.Name = "ContentContainer"
 contentContainer.Parent = frame
 
--- 1. HUG TOWER TROLL
+-- 1. HUG TOWER TROLL (grab.lua)
 local hugTitle = Instance.new("TextLabel")
 hugTitle.Size = UDim2.new(0.9, 0, 0, 18)
 hugTitle.Position = UDim2.new(0.05, 0, 0, 42)
@@ -135,7 +135,7 @@ divider1.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 divider1.BorderSizePixel = 0
 divider1.Parent = contentContainer
 
--- 2. SLAPPER (SLAP)
+-- 2. SLAPPER (slap.lua)
 local slapTitle = Instance.new("TextLabel")
 slapTitle.Size = UDim2.new(0.9, 0, 0, 18)
 slapTitle.Position = UDim2.new(0.05, 0, 0, 140)
@@ -180,7 +180,7 @@ divider2.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 divider2.BorderSizePixel = 0
 divider2.Parent = contentContainer
 
--- 3. ALL GAME SCRIPT (TP.LUA)
+-- 3. ALL GAME SCRIPT (Trỏ thẳng tới loader.lua)
 local allTitle = Instance.new("TextLabel")
 allTitle.Size = UDim2.new(0.9, 0, 0, 18)
 allTitle.Position = UDim2.new(0.05, 0, 0, 238)
@@ -196,7 +196,7 @@ local loadAllBtn = Instance.new("TextButton")
 loadAllBtn.Size = UDim2.new(0.9, 0, 0, 26)
 loadAllBtn.Position = UDim2.new(0.05, 0, 0, 258)
 loadAllBtn.BackgroundColor3 = Color3.fromRGB(100, 50, 180)
-loadAllBtn.Text = "▶ Tải All Game Script (TP.lua)"
+loadAllBtn.Text = "▶ Tải All Game Script (Loader.lua)"
 loadAllBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 loadAllBtn.TextSize = 10
 loadAllBtn.Font = Enum.Font.GothamBold
@@ -233,7 +233,7 @@ statusLabel.Parent = contentContainer
 
 local isUSModeLoader = false
 
--- LOGIC THU NHỎ / MỞ RỘNG BẰNG LOGO NỔI
+-- LOGO NỔI ĐỘC LẬP KHI THU NHỎ
 logoBtn.MouseButton1Click:Connect(function()
     frame.Visible = false
     floatingLogo.Position = frame.Position
@@ -252,7 +252,7 @@ toggleRegionLoaderBtn.MouseButton1Click:Connect(function()
         toggleRegionLoaderBtn.Text = "🇺🇸 Region: US (English)"
         loadHugBtn.Text = "▶ Load Hug Tower Script"
         loadSlapBtn.Text = "▶ Load Slap Script"
-        loadAllBtn.Text = "▶ Load All Game Script (TP.lua)"
+        loadAllBtn.Text = "▶ Load All Game Script (Loader.lua)"
         hugNote.Text = "📌 Note: Auto Kill All will NOT auto-release because of a bug. Please press manually."
         slapNote.Text = "📌 Note: Behind Detector must be ENABLED, otherwise Auto Guess will not work."
         statusLabel.Text = "Status: Ready..."
@@ -260,7 +260,7 @@ toggleRegionLoaderBtn.MouseButton1Click:Connect(function()
         toggleRegionLoaderBtn.Text = "🇻🇳 Khu vực: VN (Tiếng Việt)"
         loadHugBtn.Text = "▶ Tải Script Hug Tower"
         loadSlapBtn.Text = "▶ Tải Script Slap"
-        loadAllBtn.Text = "▶ Tải All Game Script (TP.lua)"
+        loadAllBtn.Text = "▶ Tải All Game Script (Loader.lua)"
         hugNote.Text = "📌 Lưu ý: Auto Kill All khi bật sẽ không tự động thả vì đang lỗi. Xin phép ấn thủ công nút thả nhé!"
         slapNote.Text = "📌 Lưu ý: Tính năng Dò Phía Sau phải bật, nếu không tính năng Auto Đoán sẽ không hoạt động."
         statusLabel.Text = "Trạng thái: Sẵn sàng..."
@@ -283,10 +283,11 @@ loadSlapBtn.MouseButton1Click:Connect(function()
     statusLabel.Text = success and (isUSModeLoader and "Status: Slapper loaded!" or "Trạng thái: Đã tải Slap!") or (isUSModeLoader and "Status: Load failed!" or "Trạng thái: Tải thất bại!")
 end)
 
+-- NÚT GỌI TỚI LOADER.LUA
 loadAllBtn.MouseButton1Click:Connect(function()
-    statusLabel.Text = isUSModeLoader and "Status: Loading TP Script..." or "Trạng thái: Đang tải TP Script..."
+    statusLabel.Text = isUSModeLoader and "Status: Loading Loader Script..." or "Trạng thái: Đang tải Loader Script..."
     local success = pcall(function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/ductrungvo344-pixel/Hack/refs/heads/main/tp.lua"))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ductrungvo344-pixel/Hack/refs/heads/main/loader.lua"))()
     end)
-    statusLabel.Text = success and (isUSModeLoader and "Status: TP Script loaded!" or "Trạng thái: Đã tải TP Script!") or (isUSModeLoader and "Status: Load failed!" or "Trạng thái: Tải thất bại!")
+    statusLabel.Text = success and (isUSModeLoader and "Status: Loader Script loaded!" or "Trạng thái: Đã tải Loader Script!") or (isUSModeLoader and "Status: Load failed!" or "Trạng thái: Tải thất bại!")
 end)
