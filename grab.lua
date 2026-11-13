@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT GRAB.LUA - CÓ AUTO ESCAPE KHI HIỆN ESCAPEFILL & ESCAPE 1-100
+-- SCRIPT GRAB.LUA - AUTO SAFE TP (ĐẤT LIỀN GẦN NHẤT) & BẢNG DANH SÁCH
 -- =================================================================
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -15,11 +15,11 @@ screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
 -- =================================================================
--- KHUNG MENU CHÍNH (TĂNG CHIỀU CAO CHO NÚT AUTO ESCAPE)
+-- KHUNG MENU CHÍNH
 -- =================================================================
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 250, 0, 475)
-frame.Position = UDim2.new(0.70, 0, 0.30, 0)
+frame.Size = UDim2.new(0, 250, 0, 415)
+frame.Position = UDim2.new(0.70, 0, 0.34, 0)
 frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 frame.BorderSizePixel = 0
 frame.Active = true
@@ -34,7 +34,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 30)
 title.Position = UDim2.new(0, 0, 0, 0)
 title.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-title.Text = "  🪝 GRAB, AUTO ESCAPE & VIEW"
+title.Text = "  🪝 GRAB, SAFE TP & VIEW"
 title.TextColor3 = Color3.fromRGB(255, 215, 0)
 title.TextSize = 10
 title.Font = Enum.Font.GothamBold
@@ -48,7 +48,7 @@ titleCorner.Parent = title
 -- Logo nổi độc lập khi thu nhỏ (agg2)
 local floatingLogo = Instance.new("TextButton")
 floatingLogo.Size = UDim2.new(0, 35, 0, 35)
-floatingLogo.Position = UDim2.new(0.70, 0, 0.30, 0)
+floatingLogo.Position = UDim2.new(0.70, 0, 0.34, 0)
 floatingLogo.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
 floatingLogo.Text = "agg2"
 floatingLogo.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -80,7 +80,7 @@ logoBtn.Parent = frame
 
 local logoCorner = Instance.new("UICorner")
 logoCorner.CornerRadius = UDim.new(1, 0)
-logoBtn.Parent = frame
+logoCorner.Parent = logoBtn
 
 local logoStroke = Instance.new("UIStroke")
 logoStroke.Color = Color3.fromRGB(255, 255, 255)
@@ -96,7 +96,7 @@ contentContainer.Parent = frame
 -- =================================================================
 local listFrame = Instance.new("Frame")
 listFrame.Size = UDim2.new(0, 220, 0, 310)
-listFrame.Position = UDim2.new(0.48, 0, 0.30, 0)
+listFrame.Position = UDim2.new(0.48, 0, 0.34, 0)
 listFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 28)
 listFrame.BorderSizePixel = 0
 listFrame.Active = true
@@ -222,39 +222,24 @@ local btnCornerList = Instance.new("UICorner")
 btnCornerList.CornerRadius = UDim.new(0, 6)
 btnCornerList.Parent = openListBtn
 
--- Nút Escape Grab Instant (1-100)
-local escapeGrabBtn = Instance.new("TextButton")
-escapeGrabBtn.Size = UDim2.new(0.9, 0, 0, 26)
-escapeGrabBtn.Position = UDim2.new(0.05, 0, 0, 68)
-escapeGrabBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 180)
-escapeGrabBtn.Text = "⚡ Escape Grab Instant (1-100)"
-escapeGrabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-escapeGrabBtn.TextSize = 9
-escapeGrabBtn.Font = Enum.Font.GothamBold
-escapeGrabBtn.Parent = contentContainer
+-- Nút Auto TP Khu Vực An Toàn (Thay thế Escape Grab)
+local autoSafeTpBtn = Instance.new("TextButton")
+autoSafeTpBtn.Size = UDim2.new(0.9, 0, 0, 26)
+autoSafeTpBtn.Position = UDim2.new(0.05, 0, 0, 68)
+autoSafeTpBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+autoSafeTpBtn.Text = "🪂 Auto TP Đất Liền An Toàn: TẮT"
+autoSafeTpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+autoSafeTpBtn.TextSize = 9
+autoSafeTpBtn.Font = Enum.Font.GothamBold
+autoSafeTpBtn.Parent = contentContainer
 
-local btnCornerEG = Instance.new("UICorner")
-btnCornerEG.CornerRadius = UDim.new(0, 6)
-btnCornerEG.Parent = escapeGrabBtn
-
--- Nút Auto Escape (Bật/Tắt quét EscapeFill)
-local autoEscapeBtn = Instance.new("TextButton")
-autoEscapeBtn.Size = UDim2.new(0.9, 0, 0, 26)
-autoEscapeBtn.Position = UDim2.new(0.05, 0, 0, 98)
-autoEscapeBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
-autoEscapeBtn.Text = "🤖 Auto Escape (EscapeFill): TẮT"
-autoEscapeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-autoEscapeBtn.TextSize = 9
-autoEscapeBtn.Font = Enum.Font.GothamBold
-autoEscapeBtn.Parent = contentContainer
-
-local btnCornerAE = Instance.new("UICorner")
-btnCornerAE.CornerRadius = UDim.new(0, 6)
-autoEscapeBtn.Parent = contentContainer
+local btnCornerSafeTP = Instance.new("UICorner")
+btnCornerSafeTP.CornerRadius = UDim.new(0, 6)
+btnCornerSafeTP.Parent = autoSafeTpBtn
 
 local addWhiteBtn = Instance.new("TextButton")
 addWhiteBtn.Size = UDim2.new(0.43, 0, 0, 24)
-addWhiteBtn.Position = UDim2.new(0.05, 0, 0, 128)
+addWhiteBtn.Position = UDim2.new(0.05, 0, 0, 98)
 addWhiteBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
 addWhiteBtn.Text = "🛡️ + Whitelist"
 addWhiteBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -268,7 +253,7 @@ btnCornerW.Parent = addWhiteBtn
 
 local addBlackBtn = Instance.new("TextButton")
 addBlackBtn.Size = UDim2.new(0.43, 0, 0, 24)
-addBlackBtn.Position = UDim2.new(0.52, 0, 0, 128)
+addBlackBtn.Position = UDim2.new(0.52, 0, 0, 98)
 addBlackBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
 addBlackBtn.Text = "🎯 + Blacklist"
 addBlackBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -282,7 +267,7 @@ btnCornerB.Parent = addBlackBtn
 
 local grabBtn = Instance.new("TextButton")
 grabBtn.Size = UDim2.new(0.43, 0, 0, 26)
-grabBtn.Position = UDim2.new(0.05, 0, 0, 157)
+grabBtn.Position = UDim2.new(0.05, 0, 0, 127)
 grabBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
 grabBtn.Text = "🪝 Grab Mục Tiêu"
 grabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -296,7 +281,7 @@ btnCornerG1.Parent = grabBtn
 
 local autoGrabTargetBtn = Instance.new("TextButton")
 autoGrabTargetBtn.Size = UDim2.new(0.43, 0, 0, 26)
-autoGrabTargetBtn.Position = UDim2.new(0.52, 0, 0, 157)
+autoGrabTargetBtn.Position = UDim2.new(0.52, 0, 0, 127)
 autoGrabTargetBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
 autoGrabTargetBtn.Text = "🤖 Auto Grab: TẮT"
 autoGrabTargetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -310,7 +295,7 @@ btnCornerAGT.Parent = autoGrabTargetBtn
 
 local autoKillTargetBtn = Instance.new("TextButton")
 autoKillTargetBtn.Size = UDim2.new(0.9, 0, 0, 26)
-autoKillTargetBtn.Position = UDim2.new(0.05, 0, 0, 188)
+autoKillTargetBtn.Position = UDim2.new(0.05, 0, 0, 158)
 autoKillTargetBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
 autoKillTargetBtn.Text = "🎯 Auto Kill Mục Tiêu (TP Bục): TẮT"
 autoKillTargetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -324,7 +309,7 @@ autoKillTargetBtn.Parent = contentContainer
 
 local grabRandomBlackBtn = Instance.new("TextButton")
 grabRandomBlackBtn.Size = UDim2.new(0.9, 0, 0, 26)
-grabRandomBlackBtn.Position = UDim2.new(0.05, 0, 0, 219)
+grabRandomBlackBtn.Position = UDim2.new(0.05, 0, 0, 189)
 grabRandomBlackBtn.BackgroundColor3 = Color3.fromRGB(200, 100, 0)
 grabRandomBlackBtn.Text = "🎲 Grab Random Danh Sách Đen"
 grabRandomBlackBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -338,7 +323,7 @@ btnCornerGRB.Parent = grabRandomBlackBtn
 
 local autoKillAllBtn = Instance.new("TextButton")
 autoKillAllBtn.Size = UDim2.new(0.9, 0, 0, 26)
-autoKillAllBtn.Position = UDim2.new(0.05, 0, 0, 250)
+autoKillAllBtn.Position = UDim2.new(0.05, 0, 0, 220)
 autoKillAllBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
 autoKillAllBtn.Text = "⚔️ Auto Kill All (Trừ Whitelist): TẮT"
 autoKillAllBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -352,7 +337,7 @@ autoKillAllBtn.Parent = contentContainer
 
 local viewPlayerBtn = Instance.new("TextButton")
 viewPlayerBtn.Size = UDim2.new(0.9, 0, 0, 26)
-viewPlayerBtn.Position = UDim2.new(0.05, 0, 0, 281)
+viewPlayerBtn.Position = UDim2.new(0.05, 0, 0, 251)
 viewPlayerBtn.BackgroundColor3 = Color3.fromRGB(100, 50, 180)
 viewPlayerBtn.Text = "👁️ View Player (Mục Tiêu): TẮT"
 viewPlayerBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -366,7 +351,7 @@ viewPlayerBtn.Parent = contentContainer
 
 local toggleRegionGrabBtn = Instance.new("TextButton")
 toggleRegionGrabBtn.Size = UDim2.new(0.9, 0, 0, 24)
-toggleRegionGrabBtn.Position = UDim2.new(0.05, 0, 0, 313)
+toggleRegionGrabBtn.Position = UDim2.new(0.05, 0, 0, 283)
 toggleRegionGrabBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
 toggleRegionGrabBtn.Text = "🇻🇳 Khu vực: VN (Tiếng Việt)"
 toggleRegionGrabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -379,8 +364,8 @@ btnCornerRegionGrab.CornerRadius = UDim.new(0, 6)
 btnCornerRegionGrab.Parent = toggleRegionGrabBtn
 
 local infoStatusLabel = Instance.new("TextLabel")
-infoStatusLabel.Size = UDim2.new(0.9, 0, 0, 115)
-infoStatusLabel.Position = UDim2.new(0.05, 0, 0, 342)
+infoStatusLabel.Size = UDim2.new(0.9, 0, 0, 95)
+infoStatusLabel.Position = UDim2.new(0.05, 0, 0, 312)
 infoStatusLabel.BackgroundTransparency = 1
 infoStatusLabel.Text = "Trạng thái: Sẵn sàng\nWhitelist: 0 | Blacklist: 0"
 infoStatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -411,13 +396,13 @@ local isAutoGrabTargetRunning = false
 local isAutoKillTargetRunning = false
 local isAutoKillAllRunning = false
 local isViewPlayerRunning = false
-local isAutoEscapeRunning = false
+local isAutoSafeTpRunning = false
+local isReadyToSafeTp = false -- Cờ đánh dấu đã từng thấy EscapeFill
 local isUSModeGrab = false
 local platformPart = nil
 local savedOldPosition = nil
 
 local hugRequestRemote = ReplicatedStorage:FindFirstChild("HugRemotes") and ReplicatedStorage.HugRemotes:FindFirstChild("HugRequest")
-local hugEscapeInputRemote = ReplicatedStorage:FindFirstChild("HugRemotes") and ReplicatedStorage.HugRemotes:FindFirstChild("HugEscapeInput")
 
 local function updateStatusText(prefix)
     local wCount = 0 for _ in pairs(whitelist) do wCount = wCount + 1 end
@@ -431,6 +416,117 @@ local function applyViewCamera(targetP)
         camera.CameraSubject = targetP.Character.Humanoid
     end
 end
+
+-- Hàm tìm vị trí đất liền gần nhất bằng Raycast xung quanh nhân vật
+local function findNearestSafeLand(rootPart)
+    local origin = rootPart.Position
+    local rayParams = RaycastParams.new()
+    rayParams.FilterDescendantsInstances = {localPlayer.Character}
+    rayParams.FilterType = Enum.RaycastFilterType.Exclude
+
+    local bestPos = nil
+    local shortestDist = math.huge
+
+    -- 1. Kiểm tra thẳng ngay bên dưới nhân vật trước
+    local downResult = workspace:Raycast(origin, Vector3.new(0, -500, 0), rayParams)
+    if downResult and downResult.Instance and downResult.Instance.CanCollide then
+        return downResult.Position + Vector3.new(0, 4, 0)
+    end
+
+    -- 2. Quét tỏa tròn theo các bán kính từ gần đến xa (10 -> 250 studs) để tìm đất liền gần nhất
+    local radii = {10, 20, 35, 50, 75, 100, 140, 180, 250}
+    local angles = 16
+
+    for _, r in ipairs(radii) do
+        for i = 0, angles - 1 do
+            local theta = (i / angles) * math.pi * 2
+            local checkOrigin = Vector3.new(
+                origin.X + math.cos(theta) * r,
+                origin.Y + 120,
+                origin.Z + math.sin(theta) * r
+            )
+            local result = workspace:Raycast(checkOrigin, Vector3.new(0, -600, 0), rayParams)
+            if result and result.Instance and result.Instance.CanCollide then
+                local dist = (Vector2.new(result.Position.X, result.Position.Z) - Vector2.new(origin.X, origin.Z)).Magnitude
+                if dist < shortestDist then
+                    shortestDist = dist
+                    bestPos = result.Position + Vector3.new(0, 4, 0)
+                end
+            end
+        end
+        if bestPos then
+            return bestPos
+        end
+    end
+
+    return nil
+end
+
+-- Nút bật/tắt Auto TP Đất Liền An Toàn
+autoSafeTpBtn.MouseButton1Click:Connect(function()
+    isAutoSafeTpRunning = not isAutoSafeTpRunning
+    isReadyToSafeTp = false -- Reset trạng thái chờ mỗi khi bật/tắt
+    if isAutoSafeTpRunning then
+        autoSafeTpBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
+        autoSafeTpBtn.Text = isUSModeGrab and "🪂 Auto Safe Land TP: ON" or "🪂 Auto TP Đất Liền An Toàn: BẬT"
+        updateStatusText(isUSModeGrab and "🛡️ Watching EscapeFill..." or "🛡️ Đang theo dõi EscapeFill...")
+    else
+        autoSafeTpBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+        autoSafeTpBtn.Text = isUSModeGrab and "🪂 Auto Safe Land TP: OFF" or "🪂 Auto TP Đất Liền An Toàn: TẮT"
+        updateStatusText()
+    end
+end)
+
+-- Vòng lặp theo dõi EscapeFill -> Biến mất -> Đang rơi -> TP đất liền gần nhất
+task.spawn(function()
+    while true do
+        task.wait(0.08)
+        if isAutoSafeTpRunning then
+            pcall(function()
+                local newUI = localPlayer.PlayerGui:FindFirstChild("NewUI")
+                local escapeFill = newUI and newUI:FindFirstChild("EscapeFill")
+                local isEscapeVisible = (escapeFill ~= nil and escapeFill.Visible == true)
+
+                if isEscapeVisible then
+                    -- Bước 1: Thấy EscapeFill -> Đánh dấu sẵn sàng TP
+                    if not isReadyToSafeTp then
+                        isReadyToSafeTp = true
+                        updateStatusText(isUSModeGrab and "⚠️ Grabbed! Ready to Safe TP..." or "⚠️ Đã thấy EscapeFill! Sẵn sàng TP...")
+                    end
+                else
+                    -- Bước 2: EscapeFill đã biến mất SAU KHI đã từng hiện (isReadyToSafeTp == true)
+                    if isReadyToSafeTp then
+                        local char = localPlayer.Character
+                        local hum = char and char:FindFirstChildOfClass("Humanoid")
+                        local root = char and char:FindFirstChild("HumanoidRootPart")
+
+                        if hum and root and hum.Health > 0 then
+                            local state = hum:GetState()
+                            local velY = root.AssemblyLinearVelocity.Y
+
+                            -- Kiểm tra nhân vật đang rơi tự do (Freefall hoặc vận tốc Y âm đáng kể)
+                            if state == Enum.HumanoidStateType.Freefall or velY < -8 then
+                                local safePos = findNearestSafeLand(root)
+                                if safePos then
+                                    root.AssemblyLinearVelocity = Vector3.zero
+                                    root.CFrame = CFrame.new(safePos)
+                                    updateStatusText(isUSModeGrab and "✅ Teleported to nearest land!" or "✅ Đã TP về đất liền an toàn!")
+                                end
+                                isReadyToSafeTp = false -- Hoàn thành chu kỳ TP
+                            elseif hum.FloorMaterial ~= Enum.Material.Air then
+                                -- Nếu đã chạm đất an toàn mà không rơi thì hủy trạng thái chờ
+                                isReadyToSafeTp = false
+                                updateStatusText()
+                            end
+                        else
+                            isReadyToSafeTp = false
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
 
 local function refreshPlayerTable(filterText)
     for _, child in ipairs(playerScroll:GetChildren()) do
@@ -493,65 +589,6 @@ end)
 closeListBtn.MouseButton1Click:Connect(function() listFrame.Visible = false end)
 searchBtn.MouseButton1Click:Connect(function() refreshPlayerTable(searchBox.Text) end)
 searchBox:GetPropertyChangedSignal("Text"):Connect(function() refreshPlayerTable(searchBox.Text) end)
-
--- Hàm thực thi Escape Grab (1-100)
-local function triggerEscapeGrab()
-    pcall(function()
-        if hugEscapeInputRemote then
-            task.spawn(function()
-                for i = 1, 100 do
-                    local args = {
-                        [1] = "b613861d-b596-4504-8683-e3b0296c5bb1",
-                        [2] = i
-                    }
-                    hugEscapeInputRemote:FireServer(unpack(args))
-                    task.wait(0.01)
-                end
-            end)
-            updateStatusText(isUSModeGrab and "⚡ Escaped Grab (1-100)!" or "⚡ Đã chạy Escape Grab (1-100)!")
-        end
-    end)
-end
-
--- Nút Escape Grab thủ công
-escapeGrabBtn.MouseButton1Click:Connect(function()
-    if hugEscapeInputRemote then
-        triggerEscapeGrab()
-    else
-        updateStatusText(isUSModeGrab and "⚠️ Escape remote not found!" or "⚠️ Không tìm thấy Remote thoát Grab!")
-    end
-end)
-
--- Nút Toggle Auto Escape (Quét EscapeFill)
-autoEscapeBtn.MouseButton1Click:Connect(function()
-    isAutoEscapeRunning = not isAutoEscapeRunning
-    if isAutoEscapeRunning then
-        autoEscapeBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
-        autoEscapeBtn.Text = isUSModeGrab and "🤖 Auto Escape: ON" or "🤖 Auto Escape (EscapeFill): BẬT"
-    else
-        autoEscapeBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
-        autoEscapeBtn.Text = isUSModeGrab and "🤖 Auto Escape: OFF" or "🤖 Auto Escape (EscapeFill): TẮT"
-    end
-end)
-
--- Loop Auto Escape quét EscapeFill liên tục
-task.spawn(function()
-    while true do
-        task.wait(0.1)
-        if isAutoEscapeRunning then
-            pcall(function()
-                local newUI = localPlayer.PlayerGui:FindFirstChild("NewUI")
-                if newUI then
-                    local escapeFill = newUI:FindFirstChild("EscapeFill")
-                    if escapeFill and escapeFill.Visible then
-                        triggerEscapeGrab()
-                        task.wait(1.5) -- Tránh spam liên tục trong 1 lần dính grab
-                    end
-                end
-            end)
-        end
-    end
-end)
 
 local function createPlatform()
     if platformPart then pcall(function() platformPart:Destroy() end) end
@@ -730,8 +767,7 @@ toggleRegionGrabBtn.MouseButton1Click:Connect(function()
         searchBtn.Text = "🔍 Find"
         playerInputBox.PlaceholderText = "Target name..."
         openListBtn.Text = "👥 Player List"
-        escapeGrabBtn.Text = "⚡ Escape Grab Instant"
-        autoEscapeBtn.Text = isAutoEscapeRunning and "🤖 Auto Escape: ON" or "🤖 Auto Escape: OFF"
+        autoSafeTpBtn.Text = isAutoSafeTpRunning and "🪂 Auto Safe Land TP: ON" or "🪂 Auto Safe Land TP: OFF"
         grabBtn.Text = "🪝 Grab Target"
         autoGrabTargetBtn.Text = isAutoGrabTargetRunning and "🤖 Auto Grab: ON" or "🤖 Auto Grab: OFF"
         autoKillTargetBtn.Text = isAutoKillTargetRunning and "🎯 Auto Kill Target (TP): ON" or "🎯 Auto Kill Target (TP): OFF"
@@ -745,8 +781,7 @@ toggleRegionGrabBtn.MouseButton1Click:Connect(function()
         searchBtn.Text = "🔍 Tìm"
         playerInputBox.PlaceholderText = "Tên mục tiêu..."
         openListBtn.Text = "👥 Danh Sách"
-        escapeGrabBtn.Text = "⚡ Escape Grab Instant"
-        autoEscapeBtn.Text = isAutoEscapeRunning and "🤖 Auto Escape: BẬT" or "🤖 Auto Escape (EscapeFill): TẮT"
+        autoSafeTpBtn.Text = isAutoSafeTpRunning and "🪂 Auto TP Đất Liền An Toàn: BẬT" or "🪂 Auto TP Đất Liền An Toàn: TẮT"
         grabBtn.Text = "🪝 Grab Mục Tiêu"
         autoGrabTargetBtn.Text = isAutoGrabTargetRunning and "🤖 Auto Grab: BẬT" or "🤖 Auto Grab: TẮT"
         autoKillTargetBtn.Text = isAutoKillTargetRunning and "🎯 Auto Kill Mục Tiêu (TP Bục): BẬT" or "🎯 Auto Kill Mục Tiêu (TP Bục): TẮT"
