@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT GRAB.LUA - FULL (AUTO SAFE LAND TP, TARGET LIST & VIEW)
+-- SCRIPT GRAB.LUA - AUTO SAFE TP VỀ SPAWN CỐ ĐỊNH (0.150, -20.891, -5.039)
 -- =================================================================
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -222,12 +222,12 @@ local btnCornerList = Instance.new("UICorner")
 btnCornerList.CornerRadius = UDim.new(0, 6)
 btnCornerList.Parent = openListBtn
 
--- Nút Auto TP Đất Liền An Toàn
+-- Nút Auto TP Về Spawn Cố Định
 local autoSafeTpBtn = Instance.new("TextButton")
 autoSafeTpBtn.Size = UDim2.new(0.9, 0, 0, 26)
 autoSafeTpBtn.Position = UDim2.new(0.05, 0, 0, 68)
 autoSafeTpBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
-autoSafeTpBtn.Text = "🪂 Auto TP Đất Liền An Toàn: TẮT"
+autoSafeTpBtn.Text = "🪂 Auto TP Spawn An Toàn: TẮT"
 autoSafeTpBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 autoSafeTpBtn.TextSize = 9
 autoSafeTpBtn.Font = Enum.Font.GothamBold
@@ -401,7 +401,9 @@ local isReadyToSafeTp = false
 local isUSModeGrab = false
 local platformPart = nil
 local savedOldPosition = nil
-local lastGroundedCFrame = nil
+
+-- Tọa độ Spawn cố định
+local SAFE_SPAWN_POS = Vector3.new(0.150, -20.891, -5.039)
 
 local hugRequestRemote = ReplicatedStorage:FindFirstChild("HugRemotes") and ReplicatedStorage.HugRemotes:FindFirstChild("HugRequest")
 
@@ -418,87 +420,22 @@ local function applyViewCamera(targetP)
     end
 end
 
--- Vòng lặp ghi nhớ vị trí đứng vững an toàn cuối cùng trước khi bị grab
-task.spawn(function()
-    while true do
-        task.wait(0.2)
-        pcall(function()
-            local char = localPlayer.Character
-            local hum = char and char:FindFirstChildOfClass("Humanoid")
-            local root = char and char:FindFirstChild("HumanoidRootPart")
-            local newUI = localPlayer.PlayerGui:FindFirstChild("NewUI")
-            local escapeFill = newUI and newUI:FindFirstChild("EscapeFill")
-            local isGrabbed = (escapeFill ~= nil and escapeFill.Visible == true)
-
-            if not isGrabbed and hum and root and hum.Health > 0 and hum.FloorMaterial ~= Enum.Material.Air then
-                if root.Position.Y > -35 then
-                    lastGroundedCFrame = root.CFrame
-                end
-            end
-        end)
-    end
-end)
-
--- Hàm tìm vị trí đất liền gần nhất (Ưu tiên mặt đất cao, bỏ qua đáy vực)
-local function findNearestSafeLand(rootPart)
-    local origin = rootPart.Position
-    local rayParams = RaycastParams.new()
-    rayParams.FilterDescendantsInstances = {localPlayer.Character}
-    rayParams.FilterType = Enum.RaycastFilterType.Exclude
-
-    local bestPos = nil
-    local shortestDist = math.huge
-
-    local radii = {10, 20, 35, 50, 75, 100, 140, 180, 250}
-    local angles = 16
-
-    for _, r in ipairs(radii) do
-        for i = 0, angles - 1 do
-            local theta = (i / angles) * math.pi * 2
-            local checkOrigin = Vector3.new(
-                origin.X + math.cos(theta) * r,
-                150,
-                origin.Z + math.sin(theta) * r
-            )
-            local result = workspace:Raycast(checkOrigin, Vector3.new(0, -185, 0), rayParams)
-            if result and result.Instance and result.Instance.CanCollide and result.Position.Y > -35 then
-                if result.Normal.Y > 0.7 then
-                    local dist = (Vector2.new(result.Position.X, result.Position.Z) - Vector2.new(origin.X, origin.Z)).Magnitude
-                    if dist < shortestDist then
-                        shortestDist = dist
-                        bestPos = result.Position + Vector3.new(0, 4, 0)
-                    end
-                end
-            end
-        end
-        if bestPos then
-            return bestPos
-        end
-    end
-
-    if lastGroundedCFrame then
-        return lastGroundedCFrame.Position + Vector3.new(0, 3, 0)
-    end
-
-    return nil
-end
-
--- Nút bật/tắt Auto TP Đất Liền An Toàn
+-- Nút bật/tắt Auto TP Spawn Cố Định
 autoSafeTpBtn.MouseButton1Click:Connect(function()
     isAutoSafeTpRunning = not isAutoSafeTpRunning
     isReadyToSafeTp = false
     if isAutoSafeTpRunning then
         autoSafeTpBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
-        autoSafeTpBtn.Text = isUSModeGrab and "🪂 Auto Safe Land TP: ON" or "🪂 Auto TP Đất Liền An Toàn: BẬT"
+        autoSafeTpBtn.Text = isUSModeGrab and "🪂 Auto Safe Spawn TP: ON" or "🪂 Auto TP Spawn An Toàn: BẬT"
         updateStatusText(isUSModeGrab and "🛡️ Watching EscapeFill..." or "🛡️ Đang theo dõi EscapeFill...")
     else
         autoSafeTpBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
-        autoSafeTpBtn.Text = isUSModeGrab and "🪂 Auto Safe Land TP: OFF" or "🪂 Auto TP Đất Liền An Toàn: TẮT"
+        autoSafeTpBtn.Text = isUSModeGrab and "🪂 Auto Safe Spawn TP: OFF" or "🪂 Auto TP Spawn An Toàn: TẮT"
         updateStatusText()
     end
 end)
 
--- Vòng lặp theo dõi EscapeFill -> Biến mất -> Khóa quán tính văng lên -> TP đất liền an toàn ngay lập tức
+-- Vòng lặp theo dõi EscapeFill -> Biến mất -> Khóa vận tốc -> TP thẳng về Spawn cố định
 task.spawn(function()
     while true do
         task.wait(0.08)
@@ -522,14 +459,11 @@ task.spawn(function()
                         if hum and root and hum.Health > 0 then
                             -- Khóa sạch lực quán tính văng/kéo lên cao
                             root.AssemblyLinearVelocity = Vector3.zero
-                            root.RotVelocity = Vector3.zero
+                            root.AssemblyAngularVelocity = Vector3.zero
 
-                            -- Tìm ngay mặt đất liền an toàn gần nhất
-                            local safePos = findNearestSafeLand(root)
-                            if safePos then
-                                root.CFrame = CFrame.new(safePos)
-                                updateStatusText(isUSModeGrab and "✅ Teleported to nearest land safely!" or "✅ Đã TP an toàn về đất liền!")
-                            end
+                            -- TP cố định về Spawn
+                            root.CFrame = CFrame.new(SAFE_SPAWN_POS)
+                            updateStatusText(isUSModeGrab and "✅ Teleported to Spawn!" or "✅ Đã TP an toàn về Spawn!")
                         end
                         isReadyToSafeTp = false
                     end
@@ -778,7 +712,7 @@ toggleRegionGrabBtn.MouseButton1Click:Connect(function()
         searchBtn.Text = "🔍 Find"
         playerInputBox.PlaceholderText = "Target name..."
         openListBtn.Text = "👥 Player List"
-        autoSafeTpBtn.Text = isAutoSafeTpRunning and "🪂 Auto Safe Land TP: ON" or "🪂 Auto Safe Land TP: OFF"
+        autoSafeTpBtn.Text = isAutoSafeTpRunning and "🪂 Auto Safe Spawn TP: ON" or "🪂 Auto Safe Spawn TP: OFF"
         grabBtn.Text = "🪝 Grab Target"
         autoGrabTargetBtn.Text = isAutoGrabTargetRunning and "🤖 Auto Grab: ON" or "🤖 Auto Grab: OFF"
         autoKillTargetBtn.Text = isAutoKillTargetRunning and "🎯 Auto Kill Target (TP): ON" or "🎯 Auto Kill Target (TP): OFF"
@@ -792,7 +726,7 @@ toggleRegionGrabBtn.MouseButton1Click:Connect(function()
         searchBtn.Text = "🔍 Tìm"
         playerInputBox.PlaceholderText = "Tên mục tiêu..."
         openListBtn.Text = "👥 Danh Sách"
-        autoSafeTpBtn.Text = isAutoSafeTpRunning and "🪂 Auto TP Đất Liền An Toàn: BẬT" or "🪂 Auto TP Đất Liền An Toàn: TẮT"
+        autoSafeTpBtn.Text = isAutoSafeTpRunning and "🪂 Auto TP Spawn An Toàn: BẬT" or "🪂 Auto TP Spawn An Toàn: TẮT"
         grabBtn.Text = "🪝 Grab Mục Tiêu"
         autoGrabTargetBtn.Text = isAutoGrabTargetRunning and "🤖 Auto Grab: BẬT" or "🤖 Auto Grab: TẮT"
         autoKillTargetBtn.Text = isAutoKillTargetRunning and "🎯 Auto Kill Mục Tiêu (TP Bục): BẬT" or "🎯 Auto Kill Mục Tiêu (TP Bục): TẮT"
