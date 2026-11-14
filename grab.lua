@@ -222,7 +222,7 @@ local btnCornerList = Instance.new("UICorner")
 btnCornerList.CornerRadius = UDim.new(0, 6)
 btnCornerList.Parent = openListBtn
 
--- Nút Auto TP Khu Vực An Toàn
+-- Nút Auto TP Đất Liền An Toàn
 local autoSafeTpBtn = Instance.new("TextButton")
 autoSafeTpBtn.Size = UDim2.new(0.9, 0, 0, 26)
 autoSafeTpBtn.Position = UDim2.new(0.05, 0, 0, 68)
@@ -498,7 +498,7 @@ autoSafeTpBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Vòng lặp theo dõi EscapeFill -> Biến mất -> Đang rơi -> TP đất liền gần nhất
+-- Vòng lặp theo dõi EscapeFill -> Biến mất -> Khóa quán tính văng lên -> TP đất liền an toàn ngay lập tức
 task.spawn(function()
     while true do
         task.wait(0.08)
@@ -520,24 +520,18 @@ task.spawn(function()
                         local root = char and char:FindFirstChild("HumanoidRootPart")
 
                         if hum and root and hum.Health > 0 then
-                            local state = hum:GetState()
-                            local velY = root.AssemblyLinearVelocity.Y
+                            -- Khóa sạch lực quán tính văng/kéo lên cao
+                            root.AssemblyLinearVelocity = Vector3.zero
+                            root.RotVelocity = Vector3.zero
 
-                            if state == Enum.HumanoidStateType.Freefall or velY < -8 then
-                                local safePos = findNearestSafeLand(root)
-                                if safePos then
-                                    root.AssemblyLinearVelocity = Vector3.zero
-                                    root.CFrame = CFrame.new(safePos)
-                                    updateStatusText(isUSModeGrab and "✅ Teleported to nearest land!" or "✅ Đã TP về đất liền an toàn!")
-                                end
-                                isReadyToSafeTp = false
-                            elseif hum.FloorMaterial ~= Enum.Material.Air then
-                                isReadyToSafeTp = false
-                                updateStatusText()
+                            -- Tìm ngay mặt đất liền an toàn gần nhất
+                            local safePos = findNearestSafeLand(root)
+                            if safePos then
+                                root.CFrame = CFrame.new(safePos)
+                                updateStatusText(isUSModeGrab and "✅ Teleported to nearest land safely!" or "✅ Đã TP an toàn về đất liền!")
                             end
-                        else
-                            isReadyToSafeTp = false
                         end
+                        isReadyToSafeTp = false
                     end
                 end
             end)
