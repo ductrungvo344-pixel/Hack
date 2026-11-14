@@ -1,5 +1,5 @@
 -- =================================================================
--- SCRIPT GRAB.LUA - AUTO SAFE TP (ĐẤT LIỀN GẦN NHẤT) & BẢNG DANH SÁCH
+-- SCRIPT GRAB.LUA - FULL (AUTO SAFE LAND TP, TARGET LIST & VIEW)
 -- =================================================================
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -222,7 +222,7 @@ local btnCornerList = Instance.new("UICorner")
 btnCornerList.CornerRadius = UDim.new(0, 6)
 btnCornerList.Parent = openListBtn
 
--- Nút Auto TP Khu Vực An Toàn (Thay thế Escape Grab)
+-- Nút Auto TP Khu Vực An Toàn
 local autoSafeTpBtn = Instance.new("TextButton")
 autoSafeTpBtn.Size = UDim2.new(0.9, 0, 0, 26)
 autoSafeTpBtn.Position = UDim2.new(0.05, 0, 0, 68)
@@ -397,10 +397,11 @@ local isAutoKillTargetRunning = false
 local isAutoKillAllRunning = false
 local isViewPlayerRunning = false
 local isAutoSafeTpRunning = false
-local isReadyToSafeTp = false -- Cờ đánh dấu đã từng thấy EscapeFill
+local isReadyToSafeTp = false
 local isUSModeGrab = false
 local platformPart = nil
 local savedOldPosition = nil
+local lastGroundedCFrame = nil
 
 local hugRequestRemote = ReplicatedStorage:FindFirstChild("HugRemotes") and ReplicatedStorage.HugRemotes:FindFirstChild("HugRequest")
 
@@ -417,7 +418,28 @@ local function applyViewCamera(targetP)
     end
 end
 
--- Hàm tìm vị trí đất liền gần nhất bằng Raycast xung quanh nhân vật
+-- Vòng lặp ghi nhớ vị trí đứng vững an toàn cuối cùng trước khi bị grab
+task.spawn(function()
+    while true do
+        task.wait(0.2)
+        pcall(function()
+            local char = localPlayer.Character
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            local newUI = localPlayer.PlayerGui:FindFirstChild("NewUI")
+            local escapeFill = newUI and newUI:FindFirstChild("EscapeFill")
+            local isGrabbed = (escapeFill ~= nil and escapeFill.Visible == true)
+
+            if not isGrabbed and hum and root and hum.Health > 0 and hum.FloorMaterial ~= Enum.Material.Air then
+                if root.Position.Y > -35 then
+                    lastGroundedCFrame = root.CFrame
+                end
+            end
+        end)
+    end
+end)
+
+-- Hàm tìm vị trí đất liền gần nhất (Ưu tiên mặt đất cao, bỏ qua đáy vực)
 local function findNearestSafeLand(rootPart)
     local origin = rootPart.Position
     local rayParams = RaycastParams.new()
@@ -427,13 +449,6 @@ local function findNearestSafeLand(rootPart)
     local bestPos = nil
     local shortestDist = math.huge
 
-    -- 1. Kiểm tra thẳng ngay bên dưới nhân vật trước
-    local downResult = workspace:Raycast(origin, Vector3.new(0, -500, 0), rayParams)
-    if downResult and downResult.Instance and downResult.Instance.CanCollide then
-        return downResult.Position + Vector3.new(0, 4, 0)
-    end
-
-    -- 2. Quét tỏa tròn theo các bán kính từ gần đến xa (10 -> 250 studs) để tìm đất liền gần nhất
     local radii = {10, 20, 35, 50, 75, 100, 140, 180, 250}
     local angles = 16
 
@@ -442,15 +457,17 @@ local function findNearestSafeLand(rootPart)
             local theta = (i / angles) * math.pi * 2
             local checkOrigin = Vector3.new(
                 origin.X + math.cos(theta) * r,
-                origin.Y + 120,
+                150,
                 origin.Z + math.sin(theta) * r
             )
-            local result = workspace:Raycast(checkOrigin, Vector3.new(0, -600, 0), rayParams)
-            if result and result.Instance and result.Instance.CanCollide then
-                local dist = (Vector2.new(result.Position.X, result.Position.Z) - Vector2.new(origin.X, origin.Z)).Magnitude
-                if dist < shortestDist then
-                    shortestDist = dist
-                    bestPos = result.Position + Vector3.new(0, 4, 0)
+            local result = workspace:Raycast(checkOrigin, Vector3.new(0, -185, 0), rayParams)
+            if result and result.Instance and result.Instance.CanCollide and result.Position.Y > -35 then
+                if result.Normal.Y > 0.7 then
+                    local dist = (Vector2.new(result.Position.X, result.Position.Z) - Vector2.new(origin.X, origin.Z)).Magnitude
+                    if dist < shortestDist then
+                        shortestDist = dist
+                        bestPos = result.Position + Vector3.new(0, 4, 0)
+                    end
                 end
             end
         end
@@ -459,13 +476,17 @@ local function findNearestSafeLand(rootPart)
         end
     end
 
+    if lastGroundedCFrame then
+        return lastGroundedCFrame.Position + Vector3.new(0, 3, 0)
+    end
+
     return nil
 end
 
 -- Nút bật/tắt Auto TP Đất Liền An Toàn
 autoSafeTpBtn.MouseButton1Click:Connect(function()
     isAutoSafeTpRunning = not isAutoSafeTpRunning
-    isReadyToSafeTp = false -- Reset trạng thái chờ mỗi khi bật/tắt
+    isReadyToSafeTp = false
     if isAutoSafeTpRunning then
         autoSafeTpBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
         autoSafeTpBtn.Text = isUSModeGrab and "🪂 Auto Safe Land TP: ON" or "🪂 Auto TP Đất Liền An Toàn: BẬT"
@@ -488,13 +509,11 @@ task.spawn(function()
                 local isEscapeVisible = (escapeFill ~= nil and escapeFill.Visible == true)
 
                 if isEscapeVisible then
-                    -- Bước 1: Thấy EscapeFill -> Đánh dấu sẵn sàng TP
                     if not isReadyToSafeTp then
                         isReadyToSafeTp = true
                         updateStatusText(isUSModeGrab and "⚠️ Grabbed! Ready to Safe TP..." or "⚠️ Đã thấy EscapeFill! Sẵn sàng TP...")
                     end
                 else
-                    -- Bước 2: EscapeFill đã biến mất SAU KHI đã từng hiện (isReadyToSafeTp == true)
                     if isReadyToSafeTp then
                         local char = localPlayer.Character
                         local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -504,7 +523,6 @@ task.spawn(function()
                             local state = hum:GetState()
                             local velY = root.AssemblyLinearVelocity.Y
 
-                            -- Kiểm tra nhân vật đang rơi tự do (Freefall hoặc vận tốc Y âm đáng kể)
                             if state == Enum.HumanoidStateType.Freefall or velY < -8 then
                                 local safePos = findNearestSafeLand(root)
                                 if safePos then
@@ -512,9 +530,8 @@ task.spawn(function()
                                     root.CFrame = CFrame.new(safePos)
                                     updateStatusText(isUSModeGrab and "✅ Teleported to nearest land!" or "✅ Đã TP về đất liền an toàn!")
                                 end
-                                isReadyToSafeTp = false -- Hoàn thành chu kỳ TP
+                                isReadyToSafeTp = false
                             elseif hum.FloorMaterial ~= Enum.Material.Air then
-                                -- Nếu đã chạm đất an toàn mà không rơi thì hủy trạng thái chờ
                                 isReadyToSafeTp = false
                                 updateStatusText()
                             end
