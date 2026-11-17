@@ -365,7 +365,7 @@ localPlayer.CharacterAdded:Connect(function(char) task.wait(0.5); setupAnimation
 toggleRegionTPBtn.MouseButton1Click:Connect(function()
     isUSModeTP = not isUSModeTP
     if isUSModeTP then
-        toggleRegionTPBtn.Text = "🇺🇸 Region: US (English)"
+        toggleRegionTPBtn.Text = "🇺🇸 US (English)"
         title.Text = "  ⚡ TELEPORT & UTILITIES"
         tpSectionLbl.Text = "⚡ TELEPORT SYSTEM"
         backBtn.Text = "🔄 Back to old position"
@@ -377,7 +377,7 @@ toggleRegionTPBtn.MouseButton1Click:Connect(function()
         extraSectionLbl.Text = "🛠️ OTHER SCRIPTS"
         animSectionLbl.Text = "💃 KURDISH ANIMATIONS (FULL)"
     else
-        toggleRegionTPBtn.Text = "🇻🇳 Khu vực: VN (Tiếng Việt)"
+        toggleRegionTPBtn.Text = "🇻🇳 VN (Tiếng Việt)"
         title.Text = "  ⚡ MENU TELEPORT & TIỆN ÍCH"
         tpSectionLbl.Text = "⚡ HỆ THỐNG TELEPORT"
         backBtn.Text = "🔄 Quay lại vị trí cũ"
